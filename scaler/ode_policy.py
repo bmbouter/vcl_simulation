@@ -1,6 +1,6 @@
 from scipy import integrate
 from numpy import linspace, zeros
-import pylab as p
+#import pylab as p
 
 from scaler import Scale
 
