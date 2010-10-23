@@ -37,7 +37,7 @@ class MMCmodel(Simulation):
     """ 
 
     def __init__(self, rand_seed=333555777):
-        """Initializer for an MMCmodeli
+        """Initializer for an MMCmodel
 
         Parameters:
         rand_seed -- the number to seed the random number generator with

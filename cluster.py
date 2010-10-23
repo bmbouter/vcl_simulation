@@ -1,4 +1,4 @@
-"""MMCC_OO.py
+"""
 
 An M/M/c/c queue where c is dynamically changing
 

@@ -90,7 +90,17 @@ class OdePolicy(Scale):
         done = False
         current_C = self.sim.cluster.capacity
         found_valid_cap = False
+        iterations = 0
         while done is False:
+            print 'iterations = %s, time = %s, cluster_capacity_now = %s' % (iterations, self.sim.now(), self.sim.cluster.capacity)
+            perfect_cap = 10
+            break
+            #if self.sim.now() == 0:
+            #    perfect_cap = 10
+            #    break
+            #if iterations > 25:
+            #    raise Exception
+            iterations = iterations + 1
             t = linspace(0, self.delta, self.delta * 10)
             X, infodict = integrate.odeint(dP_dt, self.get_initial_conditions(current_C), t, args=(self.lamda, self.mu), full_output=True)
             max_observed_bp = max(X.T[-1])

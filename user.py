@@ -61,7 +61,7 @@ class User(Process):
         else:
             yield request, self, server
             self.sim.mBlocked.observe(0)
-            t = expovariate(1.0/stime)
+            t = expovariate(stime)
             self.sim.msT.observe(t)
             yield hold, self, t
             yield release, self, server
