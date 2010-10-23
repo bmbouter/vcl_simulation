@@ -4,13 +4,13 @@ class FixedSizePolicy(Scale):
 
     """Wake up periodically and Scale the cluster
 
-    This policy requests self.cluster_vms number of virtual machines, and
-    makes no further requests to modify the cluster size.
+    This policy requests self.num_vms_in_cluster number of virtual machines,
+    and makes no further requests to modify the cluster size.
 
     """
 
     def __init__(self, sim, scale_rate, startup_delay,
-            shutdown_delay, cluster_vms):
+            shutdown_delay, num_vms_in_cluster):
         """Initializes a FixedSizePolicy object
 
         parameters:
@@ -19,12 +19,12 @@ class FixedSizePolicy(Scale):
         scale_rate -- The interarrival time between scale events in seconds
         startup_delay -- the time a server spends in the booting state
         shutdown_delay -- the time a server spends in the shutting_down state
-	cluster_vms -- the integer number of virtual machines that should be
-            started
+	num_vms_in_cluster -- the integer number of virtual machines that
+            should be started
 
         """
 
-        self.cluster_vms = cluster_vms
+        self.num_vms_in_cluster = num_vms_in_cluster
         self.scaler_logic_called = False
         Scale.__init__(self, sim=sim,
                              scale_rate=scale_rate,
@@ -37,7 +37,7 @@ class FixedSizePolicy(Scale):
         """
         servers_to_stop = 0
         if self.scaler_logic_called is False:
-            servers_to_start = self.cluster_vms
+            servers_to_start = self.num_vms_in_cluster
             self.scaler_logic_called = True
         else:
             servers_to_start = 0

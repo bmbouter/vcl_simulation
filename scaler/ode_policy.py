@@ -93,8 +93,6 @@ class OdePolicy(Scale):
         iterations = 0
         while done is False:
             print 'iterations = %s, time = %s, cluster_capacity_now = %s' % (iterations, self.sim.now(), self.sim.cluster.capacity)
-            perfect_cap = 10
-            break
             #if self.sim.now() == 0:
             #    perfect_cap = 10
             #    break

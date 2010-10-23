@@ -8,6 +8,7 @@ from SimPy.Simulation import *
 from cluster import Cluster
 from appsim.scaler.reserve_policy import ReservePolicy
 from appsim.scaler.ode_policy import OdePolicy
+from appsim.scaler.fixed_size_policy import FixedSizePolicy
 from tools import MonitorStatistics
 from user import Generator
 
@@ -61,6 +62,35 @@ class MMCmodel(Simulation):
         self.activate(self.user_generator,self.user_generator.execute())
         simulationLength = (self.user_generator.maxCustomers + 2) * (1.0 / self.user_generator.lamda)
         self.simulate(until=simulationLength)
+
+class FixedSizePolicySim(MMCmodel):
+    """Designed to run MMCmodel with a Fixed Size Policy"""
+
+    def run(self, num_vms_in_cluster, density, scale_rate, lamda, mu,
+                startup_delay, shutdown_delay, num_customers):
+        """Runs the simulation with the following arguments and returns result
+
+        Parameters:
+	num_vms_in_cluster -- the integer number of virtual machines that
+            should be started
+        density -- the number of application seats per virtual machine
+        scale_rate -- The interarrival time between scale events in seconds
+        lamda -- the parameter to a Poisson distribution (in seconds)
+            which defines the arrival process
+        mu -- the parameter to a Poisson distribution (in seconds)
+            which defines the service time process
+        startup_delay -- the time a server spends in the booting state
+        shutdown_delay -- the time a server spends in the shutting_down state
+        num_customers -- the number of users to simulate
+
+        """
+        self.scaler = FixedSizePolicy(self, scale_rate, startup_delay, shutdown_delay, num_vms_in_cluster)
+        self.cluster = Cluster(self, density=density)
+        self.user_generator = Generator(self, num_customers, lamda, mu)
+        MMCmodel.run(self)
+        (bp, bp_delta) = MonitorStatistics(self.mBlocked).batchmean
+        (num_servers, ns_delta) = MonitorStatistics(self.mNumServers).batchmean
+        return {'bp': bp, 'bp_delta': bp_delta, 'num_servers': num_servers, 'ns_delta': ns_delta}
 
 class OdePolicySim(MMCmodel):
     """Designed to run MMCmodel with ODE Policy"""
