@@ -27,9 +27,9 @@ def dP_dt(p, t, lam, mu):
     else:
         X = zeros(size)
         for i in range(1,size-1):
-            X[i] =  (lam * p[i-1]) + (mu  * p[i+1]) - ((lam + mu) * p[i])
+            X[i] =  (lam * p[i-1]) + ((i+1) * mu * p[i+1]) - (lam * p[i]) - (i * mu * p[i])
         X[0] = (mu * p[1]) - (lam * p[0])
-        X[size - 1] = ((lam * p[size - 2]) - (mu * p[size - 1]))
+        X[size - 1] = ((lam * p[size - 2]) - ((size-1) * mu * p[size - 1]))
         return X
 
 class OdePolicy(Scale):
@@ -93,21 +93,17 @@ class OdePolicy(Scale):
         iterations = 0
         while done is False:
             print 'iterations = %s, time = %s, cluster_capacity_now = %s' % (iterations, self.sim.now(), self.sim.cluster.capacity)
-            #if self.sim.now() == 0:
-            #    perfect_cap = 10
-            #    break
-            #if iterations > 25:
-            #    raise Exception
             iterations = iterations + 1
             t = linspace(0, self.delta, self.delta * 10)
-            X, infodict = integrate.odeint(dP_dt, self.get_initial_conditions(current_C), t, args=(self.lamda, self.mu), full_output=True)
+            initial_conditions = self.get_initial_conditions(current_C)
+            X, infodict = integrate.odeint(dP_dt, initial_conditions, t, args=(self.lamda, self.mu), full_output=True)
             max_observed_bp = max(X.T[-1])
-            #print 'max_observed_bp = %s' % max_observed_bp
             ###
             #styles = ['b-' ,'g-', 'r-', 'm-', 'k-', 'b--' ,'g--', 'r--', 'm--', 'k--', 'b-.' ,'g-.', 'r-.', 'm-.', 'k-.', 'b:' ,'g:', 'r:', 'm:', 'k:']
             #f1 = p.figure()
             #for i, v in enumerate(X.T):
             #    p.plot(t, v, styles[i], label='p%s'%i)
+            ###  single blocking probability only  -> p.plot(t, X.T[-1], styles[2], label='p_block')
             #p.grid()
             #p.legend(loc='best')
             #p.xlabel('time')
