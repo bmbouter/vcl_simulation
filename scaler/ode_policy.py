@@ -23,7 +23,7 @@ def dP_dt(p, t, lam, mu):
     if size == 1:
         return [0]
     elif size == 2:
-        return array([(mu * p[1]) - (lam * p[0]), (lam * p[0]) - (mu * p[1])])
+        return [(mu * p[1]) - (lam * p[0]), (lam * p[0]) - (mu * p[1])]
     else:
         X = zeros(size)
         for i in range(1,size-1):
