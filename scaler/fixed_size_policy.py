@@ -5,7 +5,8 @@ class FixedSizePolicy(Scale):
     """Wake up periodically and Scale the cluster
 
     This policy requests self.num_vms_in_cluster number of virtual machines,
-    and makes no further requests to modify the cluster size.
+    and makes no further requests to modify the cluster size after the initial
+    request.
 
     """
 

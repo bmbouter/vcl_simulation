@@ -7,6 +7,7 @@ from cluster import Cluster
 from appsim.scaler.reserve_policy import ReservePolicy
 from appsim.scaler.ode_policy import OdePolicy
 from appsim.scaler.fixed_size_policy import FixedSizePolicy
+from appsim.scaler.erlang_b_formula_policy import ErlangBFormulaPolicy
 from tools import MonitorStatistics
 from user import Generator
 
@@ -83,6 +84,34 @@ class FixedSizePolicySim(MMCmodel):
 
         """
         self.scaler = FixedSizePolicy(self, scale_rate, startup_delay, shutdown_delay, num_vms_in_cluster)
+        self.cluster = Cluster(self, density=density)
+        self.user_generator = Generator(self, num_customers, lamda, mu)
+        MMCmodel.run(self)
+        (bp, bp_delta) = MonitorStatistics(self.mBlocked).batchmean
+        (num_servers, ns_delta) = MonitorStatistics(self.mNumServers).batchmean
+        return {'bp': bp, 'bp_delta': bp_delta, 'num_servers': num_servers, 'ns_delta': ns_delta}
+
+class ErlangBFormulaPolicySim(MMCmodel):
+    """Designed to run MMCmodel with Erlang B Closed Form Policy"""
+
+    def run(self, worst_bp, density, scale_rate, lamda, mu, startup_delay,
+                shutdown_delay, num_customers):
+        """Runs the simulation with the following arguments and returns result
+
+        Parameters:
+	worst_bp -- the worst bp the ErlangBFormulaPolicy will try to enforce
+        density -- the number of application seats per virtual machine
+        scale_rate -- The interarrival time between scale events in seconds
+        lamda -- the parameter to a Poisson distribution (in seconds)
+            which defines the arrival process
+        mu -- the parameter to a Poisson distribution (in seconds)
+            which defines the service time process
+        startup_delay -- the time a server spends in the booting state
+        shutdown_delay -- the time a server spends in the shutting_down state
+        num_customers -- the number of users to simulate
+
+        """
+        self.scaler = ErlangBFormulaPolicy(self, scale_rate, startup_delay, shutdown_delay, worst_bp, lamda, mu)
         self.cluster = Cluster(self, density=density)
         self.user_generator = Generator(self, num_customers, lamda, mu)
         MMCmodel.run(self)
