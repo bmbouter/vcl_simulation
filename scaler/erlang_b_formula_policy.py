@@ -10,10 +10,6 @@ def ErlangBLossEquation(offered_traffic_in_erlangs, num_servers):
     denominator = 0
     for k in range(0, num_servers + 1):
 	denominator = denominator + math.pow(offered_traffic_in_erlangs, k) / math.factorial(k)
-
-    print 'A = %s' % offered_traffic_in_erlangs
-    print 'm = %s\n' % num_servers
-
     return numerator / denominator
 
 
