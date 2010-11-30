@@ -60,6 +60,7 @@ class Scale(Process):
                 else:
                     new_vm = self.sim.cluster.create_VM()
                     new_vm.ready_time = self.sim.now() + self.startup_delay
+                    new_vm.start_time = self.sim.now()
                     self.sim.cluster.booting.append(new_vm)
                     Cluster.total_prov += 1
                     #raw_input('server booting.  it will be READY AT %s' % new_vm.ready_time)
@@ -68,6 +69,7 @@ class Scale(Process):
             for server in self.sim.cluster.shutting_down:
                 if self.sim.now() > server.power_off_time:
                     #raw_input('DELETING server %d' % server.rank)
+                    self.sim.mServerProvisionLength.observe(self.sim.now() - server.start_time)  # monitor the servers provision, deprovision time
                     Cluster.total_deleted += 1
                     self.sim.cluster.shutting_down.remove(server)
 
@@ -83,6 +85,7 @@ class Scale(Process):
             self.sim.mClusterActive.observe(len(self.sim.cluster.active))  # monitor self.sim.cluster.active
             self.sim.mClusterBooting.observe(len(self.sim.cluster.booting))  # monitor self.sim.cluster.booting
             self.sim.mClusterShuttingDown.observe(len(self.sim.cluster.shutting_down))  # monitor self.sim.cluster.shutting_down
+            self.sim.mClusterOccupancy.observe(self.sim.cluster.capacity - self.sim.cluster.n)  # monitor the number of customers at this scale event
 
             # Wait an amount of time to allow the scale function to run periodically
             yield hold, self, self.scale_rate

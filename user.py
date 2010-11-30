@@ -56,13 +56,15 @@ class User(Process):
         cluster_size = len(cluster.booting) + len(cluster.active) \
             + len(cluster.shutting_down)
         self.sim.mNumServers.observe(cluster_size)
+        self.arrival_time = self.sim.now()
+        t = expovariate(stime)
         if server is None:
             self.sim.mBlocked.observe(1)
+            self.sim.mLostServiceTimes.observe(t)
         else:
             yield request, self, server
             self.sim.mBlocked.observe(0)
-            t = expovariate(stime)
-            self.sim.msT.observe(t)
             yield hold, self, t
+            self.sim.msT.observe(t)
             yield release, self, server
 

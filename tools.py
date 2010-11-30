@@ -1,7 +1,7 @@
 import math
 
 class MonitorStatistics(object):
-    """Calculates staistics from a SimPy monitor"""
+    """Calculates statistics from a SimPy monitor"""
 
     def __init__(self, monitor):
         """Creates a MonitorStatistics object
@@ -12,9 +12,14 @@ class MonitorStatistics(object):
         """
         self.monitor = monitor
 
+    def count(self, char):
+	"""Returns the number of times char exists as a value of
+        self.monitor"""
+        return ''.join([str(a[1]) for a in self.monitor]).count(char)
+
     @property
     def batchmean(self):
-        """Returns a tuple of (average, delta)
+        """Returns a dict containing keys 'average' and 'delta'
 
         batchmean computes the average using a batch means method and finds 
         the the 95% confidence interval.  The confidence interval as the 
