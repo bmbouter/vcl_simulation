@@ -76,7 +76,7 @@ class FixedSizePolicySim(MMCmodel):
     """Designed to run MMCmodel with a Fixed Size Policy"""
 
     def run(self, num_vms_in_cluster, density, scale_rate, lamda, mu,
-                startup_delay, shutdown_delay, server_cost_rate, cust_profit_rate, num_customers):
+                startup_delay, shutdown_delay, server_cost_rate, cust_revenue_rate, num_customers):
         """Runs the simulation with the following arguments and returns result
 
         Parameters:
@@ -91,21 +91,21 @@ class FixedSizePolicySim(MMCmodel):
         startup_delay -- the time a server spends in the booting state
         shutdown_delay -- the time a server spends in the shutting_down state
         server_cost_rate -- the cost of a single server per cost period
-	cust_profit_rate -- the profit made from a single customer per cost period
+	cust_revenue_rate -- the revenue made from a single customer per cost period
         num_customers -- the number of users to simulate
 
         """
         self.scaler = FixedSizePolicy(self, scale_rate, startup_delay, shutdown_delay, num_vms_in_cluster)
         self.cluster = Cluster(self, density=density)
         self.user_generator = Generator(self, num_customers, lamda, mu)
-        self.cost_policy = HourMinimumCostPolicy(self, server_cost_rate, cust_profit_rate)
+        self.cost_policy = HourMinimumCostPolicy(self, server_cost_rate, cust_revenue_rate)
         return MMCmodel.run(self)
 
 class ErlangBFormulaPolicySim(MMCmodel):
     """Designed to run MMCmodel with Erlang B Closed Form Policy"""
 
     def run(self, worst_bp, density, scale_rate, lamda, mu, startup_delay,
-                shutdown_delay, server_cost_rate, cust_profit_rate, num_customers):
+                shutdown_delay, server_cost_rate, cust_revenue_rate, num_customers):
         """Runs the simulation with the following arguments and returns result
 
         Parameters:
@@ -119,21 +119,21 @@ class ErlangBFormulaPolicySim(MMCmodel):
         startup_delay -- the time a server spends in the booting state
         shutdown_delay -- the time a server spends in the shutting_down state
         server_cost_rate -- the cost of a single server per cost period
-	cust_profit_rate -- the profit made from a single customer per cost period
+	cust_revenue_rate -- the revenue made from a single customer per cost period
         num_customers -- the number of users to simulate
 
         """
         self.scaler = ErlangBFormulaPolicy(self, scale_rate, startup_delay, shutdown_delay, worst_bp, lamda, mu)
         self.cluster = Cluster(self, density=density)
         self.user_generator = Generator(self, num_customers, lamda, mu)
-        self.cost_policy = HourMinimumCostPolicy(self, server_cost_rate, cust_profit_rate)
+        self.cost_policy = HourMinimumCostPolicy(self, server_cost_rate, cust_revenue_rate)
         return MMCmodel.run(self)
 
 class OdePolicySim(MMCmodel):
     """Designed to run MMCmodel with ODE Policy"""
 
     def run(self, worst_bp, delta, density, scale_rate, lamda, mu,
-                startup_delay, shutdown_delay, server_cost_rate, cust_profit_rate, num_customers):
+                startup_delay, shutdown_delay, server_cost_rate, cust_revenue_rate, num_customers):
         """Runs the simulation with the following arguments and returns result
 
         Parameters:
@@ -149,21 +149,21 @@ class OdePolicySim(MMCmodel):
         startup_delay -- the time a server spends in the booting state
         shutdown_delay -- the time a server spends in the shutting_down state
         server_cost_rate -- the cost of a single server per cost period
-	cust_profit_rate -- the profit made from a single customer per cost period
+	cust_revenue_rate -- the revenue made from a single customer per cost period
         num_customers -- the number of users to simulate
 
         """
         self.scaler = OdePolicy(self, scale_rate, startup_delay, shutdown_delay, delta, worst_bp, lamda, mu)
         self.cluster = Cluster(self, density=density)
         self.user_generator = Generator(self, num_customers, lamda, mu)
-        self.cost_policy = HourMinimumCostPolicy(self, server_cost_rate, cust_profit_rate)
+        self.cost_policy = HourMinimumCostPolicy(self, server_cost_rate, cust_revenue_rate)
         return MMCmodel.run(self)
 
 class ReservePolicySim(MMCmodel):
     """Designed to run MMCmodel with Reserve Policy"""
 
     def run(self, reserved, density, scale_rate, lamda, mu,
-                startup_delay, shutdown_delay, server_cost_rate, cust_profit_rate, num_customers):
+                startup_delay, shutdown_delay, server_cost_rate, cust_revenue_rate, num_customers):
         """Runs the simulation with the following arguments and returns result
 
         Parameters:
@@ -178,12 +178,12 @@ class ReservePolicySim(MMCmodel):
         startup_delay -- the time a server spends in the booting state
         shutdown_delay -- the time a server spends in the shutting_down state
         server_cost_rate -- the cost of a single server per cost period
-	cust_profit_rate -- the profit made from a single customer per cost period
+	cust_revenue_rate -- the revenue made from a single customer per cost period
         num_customers -- the number of users to simulate
 
         """
         self.scaler = ReservePolicy(self, scale_rate, startup_delay, shutdown_delay, reserved)
         self.cluster = Cluster(self, density=density)
         self.user_generator = Generator(self, num_customers, lamda, mu)
-        self.cost_policy = HourMinimumCostPolicy(self, server_cost_rate, cust_profit_rate)
+        self.cost_policy = HourMinimumCostPolicy(self, server_cost_rate, cust_revenue_rate)
         return MMCmodel.run(self)
