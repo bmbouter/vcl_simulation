@@ -2,34 +2,6 @@ from random import expovariate
 
 from SimPy.SimulationTrace import * ## Only change in program!
 
-class Generator(Process):
-
-    """Generates Users which arrive at the application cluster"""
-
-    def __init__(self, sim, maxCustomers, lamda, mu):
-        """Creates a user generator
-        sim -- the sim users should arrive at for service
-        maxCustomers -- the number of users to simulate
-        lamda -- the parameter to a Poisson distribution (in seconds)
-            which defines the arrival process
-        mu -- the parameter to a Poisson distribution (in seconds)
-            which defines the service time process
-
-        """
-        self.maxCustomers = maxCustomers
-        self.lamda = lamda
-        self.mu = mu
-        self.sim = sim
-        Process.__init__(self, name='User Arrival Generator', sim=self.sim)
-
-    def execute(self):
-        """Begins user generations to the application cluster"""
-
-        for i in range(self.maxCustomers):
-            L = User("User "+`i`,sim=self.sim)
-            self.sim.activate(L, L.execute(self.mu, self.sim.cluster), delay=0)
-            yield hold,self,expovariate(self.lamda)
-
 class User(Process):
 
     """Users request an application and hold it for an exponential time
