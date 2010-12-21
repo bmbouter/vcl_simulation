@@ -10,7 +10,7 @@ from appsim.scaler.fixed_size_policy import FixedSizePolicy
 from appsim.scaler.erlang_b_formula_policy import ErlangBFormulaPolicy
 from tools import MonitorStatistics
 from user_generators import PoissonGenerator, IPPGenerator
-from cost import HourMinimumCostPolicy
+from billable_time import HourMinimumBillablePolicy
 
 from scaler.reserve_policy import ReservePolicy
 from scaler.ode_policy import OdePolicy
@@ -98,7 +98,7 @@ class FixedSizePolicySim(MMCmodel):
         self.scaler = FixedSizePolicy(self, scale_rate, startup_delay, shutdown_delay, num_vms_in_cluster)
         self.cluster = Cluster(self, density=density)
         self.user_generator = PoissonGenerator(self, num_customers, lamda, mu)
-        self.cost_policy = HourMinimumCostPolicy(self, server_cost_rate, cust_revenue_rate)
+        self.cost_policy = HourMinimumBillablePolicy(self)
         return MMCmodel.run(self)
 
 class ErlangBFormulaPolicySim(MMCmodel):
@@ -125,8 +125,9 @@ class ErlangBFormulaPolicySim(MMCmodel):
         """
         self.scaler = ErlangBFormulaPolicy(self, scale_rate, startup_delay, shutdown_delay, worst_bp, lamda, mu)
         self.cluster = Cluster(self, density=density)
-        self.user_generator = PoissonGenerator(self, num_customers, lamda, mu)
-        self.cost_policy = HourMinimumCostPolicy(self, server_cost_rate, cust_revenue_rate)
+        #self.user_generator = PoissonGenerator(self, num_customers, lamda, mu)
+        self.user_generator = IPPGenerator(self, num_customers, lamda, 2.0, 0.99, mu)
+        self.cost_policy = HourMinimumBillablePolicy(self)
         return MMCmodel.run(self)
 
 class OdePolicySim(MMCmodel):
@@ -156,7 +157,7 @@ class OdePolicySim(MMCmodel):
         self.scaler = OdePolicy(self, scale_rate, startup_delay, shutdown_delay, delta, worst_bp, lamda, mu)
         self.cluster = Cluster(self, density=density)
         self.user_generator = PoissonGenerator(self, num_customers, lamda, mu)
-        self.cost_policy = HourMinimumCostPolicy(self, server_cost_rate, cust_revenue_rate)
+        self.cost_policy = HourMinimumBillablePolicy(self)
         return MMCmodel.run(self)
 
 class ReservePolicySim(MMCmodel):
@@ -185,5 +186,5 @@ class ReservePolicySim(MMCmodel):
         self.scaler = ReservePolicy(self, scale_rate, startup_delay, shutdown_delay, reserved)
         self.cluster = Cluster(self, density=density)
         self.user_generator = PoissonGenerator(self, num_customers, lamda, mu)
-        self.cost_policy = HourMinimumCostPolicy(self, server_cost_rate, cust_revenue_rate)
+        self.cost_policy = HourMinimumBillablePolicy(self)
         return MMCmodel.run(self)

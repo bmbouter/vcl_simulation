@@ -27,13 +27,46 @@ class IPPGenerator(Process):
         self.sim = sim
         Process.__init__(self, name='User Arrival Generator', sim=self.sim)
 
+    @property
+    def lamda(self):
+        """A legacy attribute used to calculate total simulation length"""
+        return self.lamda_avg
+
+    @property
+    def phi(self):
+        """Returns the value of phi"""
+        numerator = 2 * self.lamda_avg * (1 - self.r) * (1- self.r)
+        denominator = self.r * (self.c_squared - 1)
+        return numerator / denominator
+
+    @property
+    def psi(self):
+        """Returns the value of psi"""
+        numerator = 2 * self.lamda_avg * (1 - self.r)
+        denominator = self.c_squared - 1
+        return numerator / denominator
+
+    @property
+    def lamda_on(self):
+        """Returns the value of lamda_on"""
+        return self.lamda_avg / self.r
+
     def execute(self):
         """Begins user generations to the application cluster"""
 
-        for i in range(self.maxCustomers):
-            L = User("User "+`i`,sim=self.sim)
-            self.sim.activate(L, L.execute(self.mu, self.sim.cluster), delay=0)
-            yield hold,self,expovariate(self.lamda)
+        num_cust = 0
+        while True:
+            on_to_off_time = expovariate(self.phi) + self.sim.now()
+            interarrival_time = expovariate(self.lamda_on)
+            while self.sim.now() + interarrival_time <= on_to_off_time:
+                yield hold,self,interarrival_time
+                L = User("User %s" % num_cust, sim=self.sim)
+                self.sim.activate(L, L.execute(self.mu, self.sim.cluster), delay=0)
+                num_cust = num_cust + 1
+                if num_cust >= self.maxCustomers:
+                    return
+                interarrival_time = expovariate(self.lamda_on)
+            yield hold,self,expovariate(self.psi) + on_to_off_time - self.sim.now()
 
 class PoissonGenerator(Process):
     """Generates Users at a Poisson rate of lamda"""
@@ -59,6 +92,6 @@ class PoissonGenerator(Process):
         """Begins user generations to the application cluster"""
 
         for i in range(self.maxCustomers):
-            L = User("User "+`i`,sim=self.sim)
+            L = User("User %s" % i, sim=self.sim)
             self.sim.activate(L, L.execute(self.mu, self.sim.cluster), delay=0)
             yield hold,self,expovariate(self.lamda)
