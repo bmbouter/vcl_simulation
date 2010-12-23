@@ -2,8 +2,8 @@ import math
 
 from tools import MonitorStatistics
 
-class NoMinimumBillablePolicy(object):
-    """NoMinimumBillablePolicy is designed to handle all observing required to calculate all billable time metrics for a simulation.
+class BillablePolicy(object):
+    """BillablePolicy is designed to handle all observing required to calculate all billable time metrics for a simulation.
 
     This policy does a strict summarization of all billable items
 
@@ -58,7 +58,7 @@ class NoMinimumBillablePolicy(object):
                 new_service_time = current_sim_time - item[0]
                 self.sim.mLostServiceTimes[i][1] = new_service_time
 
-class HourMinimumBillablePolicy(NoMinimumBillablePolicy):
+class HourMinimumBillablePolicy(BillablePolicy):
     """A policy that rounds up to the next integer when reporting both server and customer billable time"""
 
     def compute_billable_time(self):
