@@ -9,7 +9,8 @@ from appsim.scaler.ode_policy import OdePolicy
 from appsim.scaler.fixed_size_policy import FixedSizePolicy
 from appsim.scaler.erlang_b_formula_policy import ErlangBFormulaPolicy
 from tools import MonitorStatistics
-from user_generators import PoissonGenerator, IPPGenerator
+from user_generators import PoissonGenerator, IPPGenerator, DataFileGenerator
+from user_generators import NoMoreUsersException
 from billable_time import HourMinimumBillablePolicy
 
 from scaler.reserve_policy import ReservePolicy
@@ -60,16 +61,33 @@ class MMCmodel(Simulation):
         self.msT = Monitor(sim=self)  # monitor for the generated service times
         self.mLostServiceTimes = Monitor(sim=self)  # monitor for the generated service times for customers who are were blocked
 
+    def finalize_simulation(self):
+        c = self.cluster
+        for server in c.active + c.booting + c.shutting_down:
+            c.active.remove(server)
+            self.mServerProvisionLength.observe(self.now() - server.start_time)  # monitor the servers provision, deprovision time
+
+    def get_utilization(self):
+        total_seat_time = self.mServerProvisionLength.total() * self.cluster.density
+        used_seat_time = self.msT.total()
+        return used_seat_time / total_seat_time
+
     def run(self):
         """Runs an MMCmodel simulation"""
         self.activate(self.scaler,self.scaler.execute())
         self.activate(self.user_generator,self.user_generator.execute())
-        simulationLength = (self.user_generator.maxCustomers + 2) * (1.0 / self.user_generator.lamda)
-        self.simulate(until=simulationLength)
+        try:
+            self.simulate(until=10**30)
+        except NoMoreUsersException:
+            self.stopSimulation()
+        self.finalize_simulation()
         return_dict = self.cost_policy.run()
         (bp, bp_delta) = MonitorStatistics(self.mBlocked).batchmean
         (num_servers, ns_delta) = MonitorStatistics(self.mNumServers).batchmean
-        return_dict.update({'bp': bp, 'bp_delta': bp_delta, 'num_servers': num_servers, 'ns_delta': ns_delta})
+        utilization = self.get_utilization()
+        bp_percent_error = bp_delta / bp if bp else 0
+        return_dict.update({'bp': bp, 'bp_delta': bp_delta, 'num_servers': num_servers, 'ns_delta': ns_delta, 
+                            'bp_percent_error': bp_percent_error, 'utilization': utilization})
         return return_dict
 
 class FixedSizePolicySim(MMCmodel):
@@ -95,6 +113,7 @@ class FixedSizePolicySim(MMCmodel):
         """
         self.scaler = FixedSizePolicy(self, scale_rate, startup_delay, shutdown_delay, num_vms_in_cluster)
         self.cluster = Cluster(self, density=density)
+        #self.user_generator = DataFileGenerator(self, '/home/bmbouter/simulations/rewrite/data/test_data.csv')
         self.user_generator = PoissonGenerator(self, num_customers, lamda, mu)
         self.cost_policy = HourMinimumBillablePolicy(self)
         return MMCmodel.run(self)

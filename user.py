@@ -18,8 +18,7 @@ class User(Process):
         """Simulate a single user
 
         Parameters:
-        stime -- the parameter to a Poisson distribution (in seconds)
-            which defines the service time process
+        stime -- the service time the user should use service for
         cluster -- the cluster this user is to arrive at
 
         """
@@ -29,14 +28,13 @@ class User(Process):
             + len(cluster.shutting_down)
         self.sim.mNumServers.observe(cluster_size)
         self.arrival_time = self.sim.now()
-        t = expovariate(stime)
         if server is None:
             self.sim.mBlocked.observe(1)
-            self.sim.mLostServiceTimes.observe(t)
+            self.sim.mLostServiceTimes.observe(stime)
         else:
             yield request, self, server
             self.sim.mBlocked.observe(0)
-            yield hold, self, t
-            self.sim.msT.observe(t)
+            yield hold, self, stime
+            self.sim.msT.observe(stime)
             yield release, self, server
 
