@@ -50,6 +50,7 @@ class Scale(Process):
                     not_to_be_shut_off_list.append(s)
 
             servers_to_start, servers_to_stop = self.scaler_logic()
+	    stopped_count = 0
 
             for server in range(servers_to_start):
                 if self.sim.cluster.shutting_down:
@@ -65,22 +66,25 @@ class Scale(Process):
                     Cluster.total_prov += 1
                     #raw_input('server booting.  it will be READY AT %s' % new_vm.ready_time)
 
-            # Delete active VMs 
-            for server in self.sim.cluster.shutting_down:
-                if self.sim.now() > server.power_off_time:
-                    #raw_input('DELETING server %d' % server.rank)
-                    self.sim.mServerProvisionLength.observe(self.sim.now() - server.start_time)  # monitor the servers provision, deprovision time
-                    Cluster.total_deleted += 1
-                    self.sim.cluster.shutting_down.remove(server)
-
             # Look for VMs to shut off
             for server in self.sim.cluster.active:
                 if server.activeQ == [] and server not in not_to_be_shut_off_list and servers_to_stop > 0:
+                    stopped_count = stopped_count + 1
                     servers_to_stop = servers_to_stop - 1
                     server.power_off_time = self.sim.now() + self.shutdown_delay
                     #raw_input('Server %d is empty, shutting it down.  It will be powered off at %d' % (server.rank, server.power_off_time))
                     self.sim.cluster.active.remove(server)
                     self.sim.cluster.shutting_down.append(server)
+
+            self.scaling_complete(stopped_count)
+
+            # Delete shutting_down VMs 
+            for server in self.sim.cluster.shutting_down:
+                if self.sim.now() >= server.power_off_time:
+                    #raw_input('DELETING server %d' % server.rank)
+                    self.sim.mServerProvisionLength.observe(self.sim.now() - server.start_time)  # monitor the servers provision, deprovision time
+                    Cluster.total_deleted += 1
+                    self.sim.cluster.shutting_down.remove(server)
 
             self.sim.mClusterActive.observe(len(self.sim.cluster.active))  # monitor self.sim.cluster.active
             self.sim.mClusterBooting.observe(len(self.sim.cluster.booting))  # monitor self.sim.cluster.booting
@@ -89,6 +93,14 @@ class Scale(Process):
 
             # Wait an amount of time to allow the scale function to run periodically
             yield hold, self, self.scale_rate
+
+    def scaling_complete(self, stopped_count):
+	"""A callback function which is called after scaling is complete with
+	the number of servers stopped.  If a scaler policy does not override
+        this funciton it does nothing.
+
+        """
+        pass
 
     def scaler_logic(self):
         """This is where scaler_logic not common to all scalers is stored.  This
