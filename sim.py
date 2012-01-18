@@ -122,61 +122,6 @@ class FixedSizePolicyFixedPoissonSim(MMCmodel):
         self.cost_policy = HourMinimumBillablePolicy(self)
         return MMCmodel.run(self)
 
-class ErlangBFormulaPolicySim(MMCmodel):
-    """Designed to run MMCmodel with Erlang B Closed Form Policy"""
-
-    def run(self, worst_bp, density, scale_rate, lamda, mu, startup_delay,
-                shutdown_delay, num_customers):
-        """Runs the simulation with the following arguments and returns result
-
-        Parameters:
-	worst_bp -- the worst bp the ErlangBFormulaPolicy will try to enforce
-        density -- the number of application seats per virtual machine
-        scale_rate -- The interarrival time between scale events in seconds
-        lamda -- the parameter to a Poisson distribution (in seconds)
-            which defines the arrival process
-        mu -- the parameter to a Poisson distribution (in seconds)
-            which defines the service time process
-        startup_delay -- the time a server spends in the booting state
-        shutdown_delay -- the time a server spends in the shutting_down state
-        num_customers -- the number of users to simulate
-
-        """
-        self.scaler = ErlangBFormulaPolicy(self, scale_rate, startup_delay, shutdown_delay, worst_bp, lamda, mu)
-        self.cluster = Cluster(self, density=density)
-        self.user_generator = PoissonGenerator(self, num_customers, lamda, mu)
-        #self.user_generator = IPPGenerator(self, num_customers, lamda, 2.0, 0.99, mu)
-        self.cost_policy = HourMinimumBillablePolicy(self)
-        return MMCmodel.run(self)
-
-class OdePolicySim(MMCmodel):
-    """Designed to run MMCmodel with ODE Policy"""
-
-    def run(self, worst_bp, delta, density, scale_rate, lamda, mu,
-                startup_delay, shutdown_delay, num_customers):
-        """Runs the simulation with the following arguments and returns result
-
-        Parameters:
-        worst_bp -- the worst bp the OdePolicy will try to enforce
-        delta -- the numer of seconds the OdePolicy should maintain
-            the predicted blocking probabilities less than worst_bp
-        density -- the number of application seats per virtual machine
-        scale_rate -- The interarrival time between scale events in seconds
-        lamda -- the parameter to a Poisson distribution (in seconds)
-            which defines the arrival process
-        mu -- the parameter to a Poisson distribution (in seconds)
-            which defines the service time process
-        startup_delay -- the time a server spends in the booting state
-        shutdown_delay -- the time a server spends in the shutting_down state
-        num_customers -- the number of users to simulate
-
-        """
-        self.scaler = OdePolicy(self, scale_rate, startup_delay, shutdown_delay, delta, worst_bp, lamda, mu)
-        self.cluster = Cluster(self, density=density)
-        self.user_generator = PoissonGenerator(self, num_customers, lamda, mu)
-        self.cost_policy = HourMinimumBillablePolicy(self)
-        return MMCmodel.run(self)
-
 class ReservePolicyFixedPoissonSim(MMCmodel):
     """Designed to run MMCmodel with Reserve Policy and homogeneous Poisson
        arrivals and departures.
