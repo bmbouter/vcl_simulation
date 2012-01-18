@@ -64,7 +64,6 @@ class MMCmodel(Simulation):
     def finalize_simulation(self):
         c = self.cluster
         for server in c.active + c.booting + c.shutting_down:
-            c.active.remove(server)
             self.mServerProvisionLength.observe(self.now() - server.start_time)  # monitor the servers provision, deprovision time
 
     def get_utilization(self):
