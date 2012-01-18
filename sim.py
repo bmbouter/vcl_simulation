@@ -7,6 +7,7 @@ from cluster import Cluster
 from appsim.scaler.reserve_policy import ReservePolicy
 from appsim.scaler.ode_policy import OdePolicy
 from appsim.scaler.fixed_size_policy import FixedSizePolicy
+from appsim.scaler.data_file_policy import GenericDataFileScaler
 from appsim.scaler.erlang_b_formula_policy import ErlangBFormulaPolicy
 from tools import MonitorStatistics
 from user_generators import PoissonGenerator, IPPGenerator, DataFileGenerator
@@ -89,8 +90,11 @@ class MMCmodel(Simulation):
                             'bp_percent_error': bp_percent_error, 'utilization': utilization})
         return return_dict
 
-class FixedSizePolicySim(MMCmodel):
-    """Designed to run MMCmodel with a Fixed Size Policy"""
+class FixedSizePolicyFixedPoissonSim(MMCmodel):
+    """Designed to run MMCmodel with a Fixed Size Policy and homeogeneous
+       Poisson arrivals and departures.
+
+    """
 
     def run(self, num_vms_in_cluster, density, scale_rate, lamda, mu,
                 startup_delay, shutdown_delay, num_customers):
@@ -111,6 +115,7 @@ class FixedSizePolicySim(MMCmodel):
 
         """
         self.scaler = FixedSizePolicy(self, scale_rate, startup_delay, shutdown_delay, num_vms_in_cluster)
+        #self.scaler = GenericDataFileScaler(self, scale_rate, startup_delay, shutdown_delay, '/home/bmbouter/simulations/rewrite/data/test_schedule.csv', 3600)
         self.cluster = Cluster(self, density=density)
         #self.user_generator = DataFileGenerator(self, '/home/bmbouter/simulations/rewrite/data/test_data.csv')
         self.user_generator = PoissonGenerator(self, num_customers, lamda, mu)
@@ -172,8 +177,11 @@ class OdePolicySim(MMCmodel):
         self.cost_policy = HourMinimumBillablePolicy(self)
         return MMCmodel.run(self)
 
-class ReservePolicySim(MMCmodel):
-    """Designed to run MMCmodel with Reserve Policy"""
+class ReservePolicyFixedPoissonSim(MMCmodel):
+    """Designed to run MMCmodel with Reserve Policy and homogeneous Poisson
+       arrivals and departures.
+
+    """
 
     def run(self, reserved, density, scale_rate, lamda, mu,
                 startup_delay, shutdown_delay, num_customers):
