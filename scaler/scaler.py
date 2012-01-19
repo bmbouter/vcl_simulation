@@ -58,14 +58,15 @@ class Scale(Process):
                     new_vm.start_time = self.sim.now()
                     self.sim.cluster.booting.append(new_vm)
                     Cluster.total_prov += 1
-                    #raw_input('server booting.  it will be READY AT %s' % new_vm.ready_time)
+                    #raw_input('server %s booting.  it will be READY AT %s' % (new_vm.rank, new_vm.ready_time))
 
-            for s in self.sim.cluster.booting:
-                if self.sim.now() >= s.ready_time:
-                    #raw_input('Server %d is now active' % s.rank)
-                    self.sim.cluster.booting.remove(s)
-                    self.sim.cluster.active.append(s)
-                    not_to_be_shut_off_list.append(s)
+            ready_to_be_active = [ elem for elem in self.sim.cluster.booting if self.sim.now() >= elem.ready_time ]
+
+            for s in ready_to_be_active:
+                #raw_input('Server %d is now active' % s.rank)
+                self.sim.cluster.booting.remove(s)
+                self.sim.cluster.active.append(s)
+                not_to_be_shut_off_list.append(s)
 
             # Look for VMs to shut off
             for server in self.sim.cluster.active:
