@@ -92,7 +92,11 @@ class Scale(Process):
             self.sim.mClusterOccupancy.observe(self.sim.cluster.capacity - self.sim.cluster.n)  # monitor the number of customers at this scale event
 
             # Wait an amount of time to allow the scale function to run periodically
-            yield hold, self, self.scale_rate
+            yield hold, self, self.sleep()
+
+    def sleep(self):
+        """Returns the amount of simulation time simpy should sleep for"""
+        return self.scale_rate
 
     def scaling_complete(self, stopped_count):
 	"""A callback function which is called after scaling is complete with
