@@ -115,9 +115,7 @@ class FixedSizePolicyFixedPoissonSim(MMCmodel):
 
         """
         self.scaler = FixedSizePolicy(self, scale_rate, startup_delay, shutdown_delay, num_vms_in_cluster)
-        #self.scaler = GenericDataFileScaler(self, scale_rate, startup_delay, shutdown_delay, '/home/bmbouter/simulations/rewrite/data/test_schedule.csv', 3600)
         self.cluster = Cluster(self, density=density)
-        #self.user_generator = DataFileGenerator(self, '/home/bmbouter/simulations/rewrite/data/test_data.csv')
         self.user_generator = PoissonGenerator(self, num_customers, lamda, mu)
         self.cost_policy = HourMinimumBillablePolicy(self)
         return MMCmodel.run(self)
@@ -149,5 +147,32 @@ class ReservePolicyFixedPoissonSim(MMCmodel):
         self.scaler = ReservePolicy(self, scale_rate, startup_delay, shutdown_delay, reserved)
         self.cluster = Cluster(self, density=density)
         self.user_generator = PoissonGenerator(self, num_customers, lamda, mu)
+        self.cost_policy = HourMinimumBillablePolicy(self)
+        return MMCmodel.run(self)
+
+class DataFilePolicyDataFileUserSim(MMCmodel):
+    """Designed to run MMCmodel with a provisioning schedule enumerated in a
+       data file, and arrivals and departures scheduled from a data file
+       containing interarrival and service times.
+
+    """
+
+    def run(self, prov_data_file_path, users_data_file_path, density,
+                startup_delay, shutdown_delay):
+        """Runs the simulation with the following arguments and returns result
+
+        Parameters:
+	prov_data_file_path -- a file path to the provisioning data file with
+	    two comma separated columns.  provision time, deprovision time
+	users_data_file_path -- a file path to the user data file with two
+            comma separated columns.  interarrival time, service time
+        density -- the number of application seats per virtual machine
+        startup_delay -- the time a server spends in the booting state
+        shutdown_delay -- the time a server spends in the shutting_down state
+
+        """
+        self.scaler = GenericDataFileScaler(self, startup_delay, shutdown_delay, prov_data_file_path)
+        self.cluster = Cluster(self, density=density)
+        self.user_generator = DataFileGenerator(self, users_data_file_path)
         self.cost_policy = HourMinimumBillablePolicy(self)
         return MMCmodel.run(self)
