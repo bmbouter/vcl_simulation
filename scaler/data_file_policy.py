@@ -50,12 +50,12 @@ class GenericDataFileScaler(Scale):
         """
         self.to_deprovision = self.servers_to_stop - stopped_count
         if self.to_deprovision > 0:
-            self.prov_events.append(('C', self.sim.now() + DEPROV_CHECK_RATE, ))
+            self.prov_events.append((self.sim.now() + DEPROV_CHECK_RATE, 'C', ))
             sorted(self.prov_events)
 
     def sleep(self):
         """Overrides the sleep function to follow the data files sleep length"""
-        return self.prov_events[0][0] - self.sim.now()
+        return self.prov_events[0][0] - self.sim.now() if len(self.prov_events) > 0 else 10**10
 
     def scaler_logic(self):
         """Implements the scaler logic specific to this scaler
@@ -63,8 +63,9 @@ class GenericDataFileScaler(Scale):
         """
         servers_to_stop = 0
         servers_to_start = 0
-        while (self.sim.now() == self.prov_events[0][0]):
+        while len(self.prov_events) > 0 and self.sim.now() == self.prov_events[0][0]:
             event = self.prov_events.pop(0)
+            print event
             event_label = event[1]
             if event_label == 'P':
                 servers_to_start = servers_to_start + 1
