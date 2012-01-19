@@ -65,7 +65,6 @@ class GenericDataFileScaler(Scale):
         servers_to_start = 0
         while len(self.prov_events) > 0 and self.sim.now() == self.prov_events[0][0]:
             event = self.prov_events.pop(0)
-            print event
             event_label = event[1]
             if event_label == 'P':
                 servers_to_start = servers_to_start + 1
