@@ -10,7 +10,7 @@ from appsim.scaler.fixed_size_policy import FixedSizePolicy
 from appsim.scaler.data_file_policy import GenericDataFileScaler
 from appsim.scaler.erlang_b_formula_policy import ErlangBFormulaPolicy
 from tools import MonitorStatistics
-from user_generators import PoissonGenerator, IPPGenerator, DataFileGenerator
+from user_generators import PoissonGenerator, DataFileGenerator
 from user_generators import NoMoreUsersException
 from billable_time import HourMinimumBillablePolicy
 
