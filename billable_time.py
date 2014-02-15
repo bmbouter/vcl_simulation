@@ -14,9 +14,6 @@ class BillablePolicy(object):
 
     def run(self):
         """Returns a dict containing 'billable_time', 'lost_billable_time', 'server_cost_time', and 'total_costs'"""
-        self._observe_active_servers_billable_time()
-        self._observe_existing_customers()
-        self._adjust_mLostServiceTimes()
         billable_time = self.compute_billable_time()
         lost_billable_time = self.compute_lost_billable_time()
         server_cost_time = self.compute_server_cost_time()
@@ -35,31 +32,6 @@ class BillablePolicy(object):
         """Returns the cost of all servers operated for the following"""
         returnsum([item[0] for item in self.sim.mServerProvisionLength])
 
-    def _observe_active_servers_billable_time(self):
-        """Observes the billable time of servers that are still running assuming the stop now"""
-        for server in self.sim.cluster.active:
-            self.sim.mServerProvisionLength.observe(self.sim.now() - server.start_time)
-        self.sim.cluster.active = []
-        for server in self.sim.cluster.booting:
-            self.sim.mServerProvisionLength.observe(self.sim.now() - server.start_time)
-        self.sim.cluster.booting = []
-        for server in self.sim.cluster.shutting_down:
-            self.sim.mServerProvisionLength.observe(self.sim.now() - server.start_time)
-        self.sim.cluster.shutting_down = []
-
-    def _observe_existing_customers(self):
-        """Observes the billable time of customers that are still running assuming they leave now"""
-        for active in self.sim.cluster.active:
-            for user in active.activeQ:
-                self.sim.msT.observe(self.sim.now() - user.arrival_time)
-
-    def _adjust_mLostServiceTimes(self):
-        """Removes from mLostServiceTimes any service times that go further into the future than the simulation did"""
-        current_sim_time = self.sim.now()
-        for i, item in enumerate(self.sim.mLostServiceTimes):
-            if sum(item) > current_sim_time:
-                new_service_time = current_sim_time - item[0]
-                self.sim.mLostServiceTimes[i][1] = new_service_time
 
 class HourMinimumBillablePolicy(BillablePolicy):
     """A policy that rounds up to the next integer when reporting both server and customer billable time"""

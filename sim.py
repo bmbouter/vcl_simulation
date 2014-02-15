@@ -63,15 +63,35 @@ class MMCmodel(Simulation):
         self.mLostServiceTimes = Monitor(sim=self)  # monitor for the generated service times for customers who are were blocked
 
     def finalize_simulation(self):
-        c = self.cluster
-        for server in c.active + c.booting + c.shutting_down:
-            self.mServerProvisionLength.observe(self.now() - server.start_time)  # monitor the servers provision, deprovision time
-        c.active = c.booting = c.shutting_down = []
+        self._observe_existing_customers()
+        self._observe_running_servers_billable_time()
+        self._adjust_mLostServiceTimes()
 
     def get_utilization(self):
         total_seat_time = self.mServerProvisionLength.total() * self.cluster.density
         used_seat_time = self.msT.total()
         return used_seat_time / total_seat_time
+
+    def _observe_running_servers_billable_time(self):
+        """Observes the billable time of servers that are still running assuming the stop now"""
+        c = self.cluster
+        for server in c.active + c.booting + c.shutting_down:
+            self.mServerProvisionLength.observe(self.now() - server.start_time)  # monitor the servers provision, deprovision time
+        c.active = c.booting = c.shutting_down = []
+
+    def _observe_existing_customers(self):
+        """Observes the billable time of customers that are still running assuming they leave now"""
+        for active in self.cluster.active:
+            for user in active.activeQ:
+                self.msT.observe(self.now() - user.arrival_time)
+
+    def _adjust_mLostServiceTimes(self):
+        """Removes from mLostServiceTimes any service times that go further into the future than the simulation did"""
+        current_sim_time = self.now()
+        for i, item in enumerate(self.mLostServiceTimes):
+            if sum(item) > current_sim_time:
+                new_service_time = current_sim_time - item[0]
+                self.mLostServiceTimes[i][1] = new_service_time
 
     def run(self):
         """Runs an MMCmodel simulation"""
