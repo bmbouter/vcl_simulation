@@ -39,10 +39,13 @@ class BillablePolicy(object):
         """Observes the billable time of servers that are still running assuming the stop now"""
         for server in self.sim.cluster.active:
             self.sim.mServerProvisionLength.observe(self.sim.now() - server.start_time)
+        self.sim.cluster.active = []
         for server in self.sim.cluster.booting:
             self.sim.mServerProvisionLength.observe(self.sim.now() - server.start_time)
+        self.sim.cluster.booting = []
         for server in self.sim.cluster.shutting_down:
             self.sim.mServerProvisionLength.observe(self.sim.now() - server.start_time)
+        self.sim.cluster.shutting_down = []
 
     def _observe_existing_customers(self):
         """Observes the billable time of customers that are still running assuming they leave now"""
