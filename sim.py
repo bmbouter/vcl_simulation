@@ -8,7 +8,7 @@ from appsim.scaler.reserve_policy import ReservePolicy
 #from appsim.scaler.ode_policy import OdePolicy
 from appsim.scaler.fixed_size_policy import FixedSizePolicy
 from appsim.scaler.data_file_policy import GenericDataFileScaler
-from appsim.scaler.erlang_b_formula_policy import ErlangBFormulaPolicy
+from appsim.scaler.erlang_b_formula_policy import ErlangBFormulaDataPolicy
 from tools import MonitorStatistics
 from user_generators import PoissonGenerator, DataFileGenerator
 from user_generators import NoMoreUsersException
@@ -103,13 +103,36 @@ class MMCmodel(Simulation):
             self.stopSimulation()
         self.finalize_simulation()
         return_dict = self.cost_policy.run()
-        (bp, bp_delta) = MonitorStatistics(self.mBlocked).batchmean
+        #limit to exatly 1 year of data
+        one_year_mBlocked = filter(lambda x: x[0] <= 31449600, self.mBlocked)
+        (bp, bp_delta) = MonitorStatistics(one_year_mBlocked).batchmean
         (num_servers, ns_delta) = MonitorStatistics(self.mNumServers).batchmean
+        bp_by_hour = MonitorStatistics(one_year_mBlocked).bp_by_hour
+        bp_by_day = MonitorStatistics(one_year_mBlocked).bp_by_day
+        bp_by_week = MonitorStatistics(one_year_mBlocked).bp_by_week
+        bp_by_month = MonitorStatistics(one_year_mBlocked).bp_by_month
+        bp_by_year = MonitorStatistics(one_year_mBlocked).bp_by_year
         utilization = self.get_utilization()
-        bp_percent_error = bp_delta / bp if bp else 0
-        return_dict.update({'bp': bp, 'bp_delta': bp_delta, 'num_servers': num_servers, 'ns_delta': ns_delta, 
-                            'bp_percent_error': bp_percent_error, 'utilization': utilization})
+        bp_percent_error = 100 * (bp_delta / bp if bp else 0)
+        bp_timescale_raw = {'hour': bp_by_hour['bp_raw'],
+                            'day': bp_by_day['bp_raw'],
+                            'week': bp_by_week['bp_raw'],
+                            'month': bp_by_month['bp_raw'],
+                            'year': bp_by_year['bp_raw']}
+	return_dict.update({'bp_batch_mean': bp, 
+                            'bp_batch_mean_delta': bp_delta, 
+                            'bp_by_hour': bp_by_hour, 
+                            'bp_by_day': bp_by_day, 
+                            'bp_by_week': bp_by_week, 
+                            'bp_by_month': bp_by_month, 
+                            'bp_by_year': bp_by_year, 
+                            'num_servers': num_servers, 
+                            'ns_delta': ns_delta, 
+                            'bp_batch_mean_percent_error': bp_percent_error, 
+                            'utilization': utilization,
+                            'bp_timescale_raw': bp_timescale_raw})
         return return_dict
+
 
 class FixedSizePolicyFixedPoissonSim(MMCmodel):
     """Designed to run MMCmodel with a Fixed Size Policy and homeogeneous
@@ -141,6 +164,7 @@ class FixedSizePolicyFixedPoissonSim(MMCmodel):
         self.cost_policy = HourMinimumBillablePolicy(self)
         return MMCmodel.run(self)
 
+
 class ReservePolicyFixedPoissonSim(MMCmodel):
     """Designed to run MMCmodel with Reserve Policy and homogeneous Poisson
        arrivals and departures.
@@ -171,6 +195,7 @@ class ReservePolicyFixedPoissonSim(MMCmodel):
         self.cost_policy = HourMinimumBillablePolicy(self)
         return MMCmodel.run(self)
 
+
 class ReservePolicyDataFileUserSim(MMCmodel):
     """Designed to run MMCmodel with Reserve Policy against a user arrival and
        departure scheduled from a data file containing interarrival and service
@@ -199,6 +224,7 @@ class ReservePolicyDataFileUserSim(MMCmodel):
         self.cost_policy = HourMinimumBillablePolicy(self)
         return MMCmodel.run(self)
 
+
 class DataFilePolicyDataFileUserSim(MMCmodel):
     """Designed to run MMCmodel with a provisioning schedule enumerated in a
        data file, and arrivals and departures scheduled from a data file
@@ -222,6 +248,44 @@ class DataFilePolicyDataFileUserSim(MMCmodel):
         """
         self.scaler = GenericDataFileScaler(self, startup_delay, shutdown_delay, prov_data_file_path)
         self.cluster = Cluster(self, density=density)
+        self.user_generator = DataFileGenerator(self, users_data_file_path)
+        self.cost_policy = HourMinimumBillablePolicy(self)
+        return MMCmodel.run(self)
+
+
+class ErlangDataPolicyDataFileUserSim(MMCmodel):
+    """Designed to run MMCmodel with ErlangBFormulaDataPolicy against a user
+       arrival and departure scheduled from a data file containing interarrival
+       and service times.
+
+    """
+
+    def run(self, worst_bp, pred_user_count_file_path, mu, users_data_file_path,
+		lag, density, scale_rate, startup_delay, shutdown_delay):
+        """Runs the simulation with the following arguments and returns result
+
+        Parameters:
+	worst_bp -- ensure the blocking probability does exceed this value as
+            computed by the closed form Erlang B formula.
+	pred_user_count_file_path -- a file path to the arrival predictions
+	    data file with one comma separated column containing user count
+            values
+        mu -- the parameter to a Poisson distribution (in seconds)
+	    which defines the service time process. Used for prediction
+            purposes.
+	users_data_file_path -- a file path to the user data file with two
+            comma separated columns.  interarrival time, service time
+	lag -- an integer number of periods to lag values in
+	    pred_user_count_file_path by. Effectively, this introduces lag
+            number of zeros at the beginning of pred_user_count_file
+        density -- the number of application seats per virtual machine
+        scale_rate -- The interarrival time between scale events in seconds
+        startup_delay -- the time a server spends in the booting state
+        shutdown_delay -- the time a server spends in the shutting_down state
+
+        """
+        self.cluster = Cluster(self, density=density)
+        self.scaler = ErlangBFormulaDataPolicy(self, scale_rate, startup_delay, shutdown_delay, worst_bp, pred_user_count_file_path, mu, lag)
         self.user_generator = DataFileGenerator(self, users_data_file_path)
         self.cost_policy = HourMinimumBillablePolicy(self)
         return MMCmodel.run(self)
