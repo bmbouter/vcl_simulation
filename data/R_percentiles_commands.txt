@@ -1,0 +1,16 @@
+setwd("/Users/katie/Documents/octave_unzip/home/bmbouter/simulations/rewrite/data")
+
+
+arrival_counts <- read.csv(file="2009_five_minute_counts.csv",head=FALSE,sep=",")
+
+#quantile(arrival_counts[,1], c(.995))
+
+file.remove("R_percentiles_output.csv")
+sink("R_percentiles_output.csv")
+
+for(R in seq(1,40)){
+    cat(round(ecdf(arrival_counts[,1])(R) * 100, 2))
+    cat('\n')
+}
+
+sink()
