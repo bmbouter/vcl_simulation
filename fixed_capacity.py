@@ -16,8 +16,8 @@ class main(unittest.TestCase):
 
     def test_scheduled_sim_test_1(self):
         scheduled = DataFilePolicyDataFileUserSim()
-        prov_data_file_path = '/Users/katie/Documents/octave_unzip/home/bmbouter/simulations/rewrite/data/1_server_prov_schedule.csv'
-        users_data_file_path = '/Users/katie/Documents/octave_unzip/home/bmbouter/simulations/rewrite/data/fixed_lambda_mu_user_schedule.csv'
+        prov_data_file_path = 'data/1_server_prov_schedule.csv'
+        users_data_file_path = 'data/fixed_lambda_mu_user_schedule.csv'
         results = scheduled.run(prov_data_file_path, users_data_file_path, 6, 0, 0)
         #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay, shutdown_delay)
         print results
@@ -27,4 +27,7 @@ class main(unittest.TestCase):
 
 
 if __name__ == "__main__":
+    if not os.path.isfile('fixed_capacity.py'):
+        print 'Please run in the same directory as fixed_capacity.py'
+        exit()
     unittest.main()

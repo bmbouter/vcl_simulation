@@ -1,5 +1,5 @@
 import unittest
-import pprint
+import os
 
 from appsim.sim import DataFilePolicyDataFileUserSim, ErlangDataPolicyDataFileUserSim
 
@@ -12,53 +12,46 @@ startup_delay = 0
 shutdown_delay = 0
 num_customers = 50000
 
-#class main(unittest.TestCase):
 class main(object):
     def scheduled_sim_test_2(self):
         scheduled = DataFilePolicyDataFileUserSim()
-        prov_data_file_path = '/home/bmbouter/simulations/rewrite/data/5_server_prov_schedule.csv'
-        users_data_file_path = '/home/bmbouter/simulations/rewrite/data/fixed_lambda_mu_user_schedule.csv'
+        prov_data_file_path = 'data/5_server_prov_schedule.csv'
+        users_data_file_path = 'data/fixed_lambda_mu_user_schedule.csv'
         results = scheduled.run(prov_data_file_path, users_data_file_path, 6, 0, 0)
         #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay, shutdown_delay)
         print results
-        self.assertEqual(results['bp'], 1.0)
-        self.assertEqual(results['bp_percent_error'], 0.0)
 
     def second_half_vcl_data_scheduled_sim(self):
         scheduled = DataFilePolicyDataFileUserSim()
-        prov_data_file_path = '/home/bmbouter/simulations/rewrite/data/20_server_prov_schedule.csv'
-        users_data_file_path = '/home/bmbouter/simulations/rewrite/data/second_half_year_arrivals.txt'
+        prov_data_file_path = 'data/20_server_prov_schedule.csv'
+        users_data_file_path = 'data/second_half_year_arrivals.txt'
         first_results = scheduled.run(prov_data_file_path, users_data_file_path, 5, 0, 0)
         #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay, shutdown_delay)
         print first_results
         scheduled = DataFilePolicyDataFileUserSim()
-        prov_data_file_path = '/home/bmbouter/simulations/rewrite/data/1_server_prov_schedule.csv'
-        users_data_file_path = '/home/bmbouter/simulations/rewrite/data/second_half_year_arrivals.txt'
+        prov_data_file_path = 'data/1_server_prov_schedule.csv'
+        users_data_file_path = 'data/second_half_year_arrivals.txt'
         second_results = scheduled.run(prov_data_file_path, users_data_file_path, 100, 0, 0)
         #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay, shutdown_delay)
         print second_results
-        self.assertEqual(first_results['bp'], second_results['bp'])
-        self.assertEqual(first_results['bp_percent_error'], second_results['bp_percent_error'])
 
 
     def second_half_vcl_data_predicted_from_first_half(self):
         scheduled = DataFilePolicyDataFileUserSim()
-        #prov_data_file_path = '/home/bmbouter/simulations/rewrite/data/first_half_year_provisioning_schedule.csv'
-        prov_data_file_path = '/home/bmbouter/simulations/rewrite/data/2008_optimal_provisioning_schedule.csv'
-        users_data_file_path = '/home/bmbouter/simulations/rewrite/data/2009_year_arrivals.txt'
+        #prov_data_file_path = 'data/first_half_year_provisioning_schedule.csv'
+        prov_data_file_path = 'data/2008_optimal_provisioning_schedule.csv'
+        users_data_file_path = 'data/2009_year_arrivals.txt'
         results = scheduled.run(prov_data_file_path, users_data_file_path, 2, 0, 0)
         #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay, shutdown_delay)
         print results
-        self.assertEqual(results['bp'], 1.0)
-        self.assertEqual(results['bp_percent_error'], 0.0)
 
     def fixed_policy_user_arrivals(self):
         param_name = 'seats'
         self.print_results_header(param_name)
         for capacity in range(2,201,2):
             scheduled = DataFilePolicyDataFileUserSim()
-            prov_data_file_path = '/Users/katie/Documents/octave_unzip/home/bmbouter/simulations/rewrite/data/1_server_prov_schedule.csv'
-            users_data_file_path = '/Users/katie/Documents/octave_unzip/home/bmbouter/simulations/rewrite/data/2008_year_arrivals.txt'
+            prov_data_file_path = 'data/1_server_prov_schedule.csv'
+            users_data_file_path = 'data/2008_year_arrivals.txt'
             results = scheduled.run(prov_data_file_path, users_data_file_path, capacity, 0, 0)
             #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay, shutdown_delay)
             results['param'] = capacity
@@ -81,7 +74,7 @@ class main(object):
             print('%s,%.4f,%.4f,%.4f' % (results['param'], results['bp_batch_mean'], results['bp_batch_mean_delta'], results['utilization']))
 
     def write_bp_timescale_raw_to_file(self, model_name, results):
-        base_path = "/Users/katie/Documents/octave_unzip/home/bmbouter/simulations/rewrite/data/bp_timescale_raw"
+        base_path = "data/bp_timescale_raw"
         filename_template = "%s_%s_%s.txt"
         bp_timescale_raw = results['bp_timescale_raw']
         param_name = results['param_name']
@@ -95,8 +88,8 @@ class main(object):
 
     def poisson_traffic_known_in_advance(self):
         scheduled = ErlangDataPolicyDataFileUserSim()
-        pred_user_count_file_path = '/Users/katie/Documents/octave_unzip/home/bmbouter/simulations/rewrite/data/2008_five_minute_counts.csv'
-        users_data_file_path = '/Users/katie/Documents/octave_unzip/home/bmbouter/simulations/rewrite/data/2008_year_arrivals.txt'
+        pred_user_count_file_path = 'data/2008_five_minute_counts.csv'
+        users_data_file_path = 'data/2008_year_arrivals.txt'
         worst_bp = 0.01
         mu = 1 / 4957.567
         density = 2
@@ -106,15 +99,16 @@ class main(object):
         shutdown_delay = 300
         results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay)
         # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay):
-        print results
+        results['param'] = 'poisson_known_in_advance'
+        self.print_simple_results(results)
 
     def moving_average(self):
         param_name = 'k'
         self.print_results_header(param_name)
         for k in range(1,51):
             scheduled = ErlangDataPolicyDataFileUserSim()
-            pred_user_count_file_path = '/Users/katie/Documents/octave_unzip/home/bmbouter/simulations/rewrite/data/ma_arrivals/arrivals_k_%s.txt' % k
-            users_data_file_path = '/Users/katie/Documents/octave_unzip/home/bmbouter/simulations/rewrite/data/2008_year_arrivals.txt'
+            pred_user_count_file_path = 'data/ma_arrivals/arrivals_k_%s.txt' % k
+            users_data_file_path = 'data/2008_year_arrivals.txt'
             worst_bp = 0.01
             mu = 1 / 4957.567
             density = 2
@@ -136,8 +130,8 @@ class main(object):
         self.print_results_header(param_name)
         for alpha in alpha_values:
             scheduled = ErlangDataPolicyDataFileUserSim()
-            pred_user_count_file_path = '/Users/katie/Documents/octave_unzip/home/bmbouter/simulations/rewrite/data/ema_arrivals/arrivals_alpha_%s.txt' % alpha
-            users_data_file_path = '/Users/katie/Documents/octave_unzip/home/bmbouter/simulations/rewrite/data/2008_year_arrivals.txt'
+            pred_user_count_file_path = 'data/ema_arrivals/arrivals_alpha_%s.txt' % alpha
+            users_data_file_path = 'data/2008_year_arrivals.txt'
             worst_bp = 0.01
             mu = 1 / 4957.567
             density = 2
@@ -153,6 +147,40 @@ class main(object):
             #self.print_simple_results(results)
             self.print_all_results(results)
 
+    def autoregressive(self):
+            scheduled = ErlangDataPolicyDataFileUserSim()
+            pred_user_count_file_path = 'data/auto_regressive/yearlong_autoregressive_five_minute_counts.txt'
+            users_data_file_path = 'data/2008_year_arrivals.txt'
+            worst_bp = 0.01
+            mu = 1 / 4957.567
+            density = 2
+            lag = 1
+            scale_rate = 300
+            startup_delay = 300
+            shutdown_delay = 300
+            results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay)
+            # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay):
+            results['param'] = 'AR(2)'
+            self.print_simple_results(results)
+            #self.print_all_results(results)
+
+    def mixed_autoregressive(self):
+            scheduled = ErlangDataPolicyDataFileUserSim()
+            pred_user_count_file_path = 'data/auto_regressive/mixed_autoregressive_five_minute_counts.txt'
+            users_data_file_path = 'data/2008_year_arrivals.txt'
+            worst_bp = 0.01
+            mu = 1 / 4957.567
+            density = 2
+            lag = 1
+            scale_rate = 300
+            startup_delay = 300
+            shutdown_delay = 300
+            results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay)
+            # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay):
+            results['param'] = 'mixed_AR(2)'
+            self.print_simple_results(results)
+            #self.print_all_results(results)
+
     def fixed_policy_density_analysis(self):
         param_name = 'seats'
         #self.print_results_header(param_name)
@@ -160,8 +188,8 @@ class main(object):
             for density in [1, 2, 3, 4, 5]:
                 num_servers = capacity / density
                 scheduled = DataFilePolicyDataFileUserSim()
-                prov_data_file_path = '/Users/katie/Documents/octave_unzip/home/bmbouter/simulations/rewrite/data/%s_server_prov_schedule.csv' % num_servers
-                users_data_file_path = '/Users/katie/Documents/octave_unzip/home/bmbouter/simulations/rewrite/data/2008_year_arrivals.txt'
+                prov_data_file_path = 'data/%s_server_prov_schedule.csv' % num_servers
+                users_data_file_path = 'data/2008_year_arrivals.txt'
                 results = scheduled.run(prov_data_file_path, users_data_file_path, density, 0, 0)
                 #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay, shutdown_delay)
                 results['param'] = capacity
@@ -177,8 +205,8 @@ class main(object):
         for k in [1, 3, 10, 30, 50]:
             for density in [1, 2, 3, 4, 5]:
                 scheduled = ErlangDataPolicyDataFileUserSim()
-                pred_user_count_file_path = '/Users/katie/Documents/octave_unzip/home/bmbouter/simulations/rewrite/data/ma_arrivals/arrivals_k_%s.txt' % k
-                users_data_file_path = '/Users/katie/Documents/octave_unzip/home/bmbouter/simulations/rewrite/data/2008_year_arrivals.txt'
+                pred_user_count_file_path = 'data/ma_arrivals/arrivals_k_%s.txt' % k
+                users_data_file_path = 'data/2008_year_arrivals.txt'
                 worst_bp = 0.01
                 mu = 1 / 4957.567
                 lag = 1
@@ -200,8 +228,8 @@ class main(object):
         for alpha in alpha_values:
             for density in [1, 2, 3, 4, 5]:
                 scheduled = ErlangDataPolicyDataFileUserSim()
-                pred_user_count_file_path = '/Users/katie/Documents/octave_unzip/home/bmbouter/simulations/rewrite/data/ema_arrivals/arrivals_alpha_%s.txt' % alpha
-                users_data_file_path = '/Users/katie/Documents/octave_unzip/home/bmbouter/simulations/rewrite/data/2008_year_arrivals.txt'
+                pred_user_count_file_path = 'data/ema_arrivals/arrivals_alpha_%s.txt' % alpha
+                users_data_file_path = 'data/2008_year_arrivals.txt'
                 worst_bp = 0.01
                 mu = 1 / 4957.567
                 lag = 1
@@ -218,10 +246,16 @@ class main(object):
 
 
 if __name__ == "__main__":
+    if not os.path.isfile('scheduled_capacity.py'):
+        print 'Please run in the same directory as scheduled_capacity.py'
+        exit()
     #unittest.main()
+    main().poisson_traffic_known_in_advance()
     #main().fixed_policy_user_arrivals()
     #main().moving_average()
-    main().exponential_moving_average()
+    #main().exponential_moving_average()
+    #main().autoregressive()
+    #main().mixed_autoregressive()
     #main().fixed_policy_density_analysis()
     #main().moving_average_policy_density_analysis()
     #main().exponential_moving_average_policy_density_analysis()
