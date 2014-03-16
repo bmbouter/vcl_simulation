@@ -10,7 +10,6 @@ startup_delay = 0
 shutdown_delay = 0
 num_customers = 50000
 
-#class main(unittest.TestCase):
 class main(object):
     def reserve_policy_fixed_poisson_sim_test_1(self):
         reserve = ReservePolicyFixedPoissonSim()
@@ -30,7 +29,7 @@ class main(object):
 
     def reserve_policy_data_file_user_sim(self):
         reserve = ReservePolicyDataFileUserSim()
-        users_data_file_path = '/Users/katie/Documents/octave_unzip/home/bmbouter/simulations/rewrite/data/2008_year_arrivals.txt'
+        users_data_file_path = 'data/2008_year_arrivals.txt'
         results = reserve.run(5, users_data_file_path, 2, 300, 300, 300)
         #reserve.run(reserved, users_data_file_path, density, scale_rate, startup_delay, shutdown_delay):
         print results
@@ -40,7 +39,7 @@ class main(object):
         self.print_results_header(param_name)
         for R in range(1,41):
             reserve = ReservePolicyDataFileUserSim()
-            users_data_file_path = '/Users/katie/Documents/octave_unzip/home/bmbouter/simulations/rewrite/data/2008_year_arrivals.txt'
+            users_data_file_path = 'data/2008_year_arrivals.txt'
             results = reserve.run(R, users_data_file_path, 2, 300, 300, 300)
             #reserve.run(reserved, users_data_file_path, density, scale_rate, startup_delay, shutdown_delay):
             results['param'] = R
@@ -50,7 +49,7 @@ class main(object):
             self.print_all_results(results)
 
     def write_bp_timescale_raw_to_file(self, model_name, results):
-        base_path = "/Users/katie/Documents/octave_unzip/home/bmbouter/simulations/rewrite/data/bp_timescale_raw"
+        base_path = "data/bp_timescale_raw"
         filename_template = "%s_%s_%s.txt"
         bp_timescale_raw = results['bp_timescale_raw']
         param_name = results['param_name']
@@ -68,7 +67,7 @@ class main(object):
         for R in [5, 10, 15, 20]:
             for density in [1, 2, 3, 4, 5]:
                 reserve = ReservePolicyDataFileUserSim()
-                users_data_file_path = '/Users/katie/Documents/octave_unzip/home/bmbouter/simulations/rewrite/data/2008_year_arrivals.txt'
+                users_data_file_path = 'data/2008_year_arrivals.txt'
                 results = reserve.run(R, users_data_file_path, density, 300, 300, 300)
                 #reserve.run(reserved, users_data_file_path, density, scale_rate, startup_delay, shutdown_delay):
                 results['param'] = R
@@ -91,6 +90,8 @@ class main(object):
             print('%s,%.4f,%.4f,%.4f' % (results['param'], results['bp_batch_mean'], results['bp_batch_mean_delta'], results['utilization']))
 
 if __name__ == "__main__":
-    #unittest.main()
+    if not os.path.isfile('reserve_capacity.py'):
+        print 'Please run in the same directory as reserve_capacity.py'
+        exit()
     main().reserve_policy_data_file_user_sim_table()
     #main().reserve_policy_data_file_user_sim_density_analysis()

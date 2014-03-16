@@ -50,4 +50,7 @@ def main():
     AR_mixed()
 
 if __name__ == "__main__":
+    if not os.path.isfile('autoregressive.py'):
+        print 'Please run in the same directory as autoregressive.py'
+        exit()
     main()
