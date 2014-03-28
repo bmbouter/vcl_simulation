@@ -148,12 +148,29 @@ class main(object):
             self.print_all_results(results)
 
     def autoregressive(self):
+        scheduled = ErlangDataPolicyDataFileUserSim()
+        pred_user_count_file_path = 'data/auto_regressive/yearlong_autoregressive_five_minute_counts.txt'
+        users_data_file_path = 'data/2008_year_arrivals.txt'
+        worst_bp = 0.01
+        mu = 1 / 4957.567
+        density = 2
+        lag = 1
+        scale_rate = 300
+        startup_delay = 300
+        shutdown_delay = 300
+        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay)
+        # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay):
+        results['param'] = 'AR(2)'
+        self.print_simple_results(results)
+        #self.print_all_results(results)
+
+    def autoregressive_density(self):
+        for density in [1, 2, 3, 4, 5]:
             scheduled = ErlangDataPolicyDataFileUserSim()
             pred_user_count_file_path = 'data/auto_regressive/yearlong_autoregressive_five_minute_counts.txt'
             users_data_file_path = 'data/2008_year_arrivals.txt'
             worst_bp = 0.01
             mu = 1 / 4957.567
-            density = 2
             lag = 1
             scale_rate = 300
             startup_delay = 300
@@ -161,16 +178,34 @@ class main(object):
             results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay)
             # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay):
             results['param'] = 'AR(2)'
+            results['density'] = density
             self.print_simple_results(results)
             #self.print_all_results(results)
 
     def mixed_autoregressive(self):
+        scheduled = ErlangDataPolicyDataFileUserSim()
+        pred_user_count_file_path = 'data/auto_regressive/mixed_autoregressive_five_minute_counts.txt'
+        users_data_file_path = 'data/2008_year_arrivals.txt'
+        worst_bp = 0.01
+        mu = 1 / 4957.567
+        density = 2
+        lag = 1
+        scale_rate = 300
+        startup_delay = 300
+        shutdown_delay = 300
+        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay)
+        # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay):
+        results['param'] = 'mixed_AR(2)'
+        self.print_simple_results(results)
+        #self.print_all_results(results)
+
+    def mixed_autoregressive_density(self):
+        for density in [1, 2, 3, 4, 5]:
             scheduled = ErlangDataPolicyDataFileUserSim()
             pred_user_count_file_path = 'data/auto_regressive/mixed_autoregressive_five_minute_counts.txt'
             users_data_file_path = 'data/2008_year_arrivals.txt'
             worst_bp = 0.01
             mu = 1 / 4957.567
-            density = 2
             lag = 1
             scale_rate = 300
             startup_delay = 300
@@ -178,6 +213,7 @@ class main(object):
             results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay)
             # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay):
             results['param'] = 'mixed_AR(2)'
+            results['density'] = density
             self.print_simple_results(results)
             #self.print_all_results(results)
 
@@ -250,12 +286,14 @@ if __name__ == "__main__":
         print 'Please run in the same directory as scheduled_capacity.py'
         exit()
     #unittest.main()
-    main().poisson_traffic_known_in_advance()
+    #main().poisson_traffic_known_in_advance()
     #main().fixed_policy_user_arrivals()
     #main().moving_average()
     #main().exponential_moving_average()
     #main().autoregressive()
+    #main().autoregressive_density()
     #main().mixed_autoregressive()
+    main().mixed_autoregressive_density()
     #main().fixed_policy_density_analysis()
     #main().moving_average_policy_density_analysis()
     #main().exponential_moving_average_policy_density_analysis()

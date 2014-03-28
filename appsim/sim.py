@@ -4,7 +4,7 @@ import sqlite3
 from SimPy.Simulation import *
 
 from cluster import Cluster
-from appsim.scaler.reserve_policy import ReservePolicy
+from appsim.scaler.reserve_policy import ReservePolicy, TimeVaryReservePolicy
 #from appsim.scaler.ode_policy import OdePolicy
 from appsim.scaler.fixed_size_policy import FixedSizePolicy
 from appsim.scaler.data_file_policy import GenericDataFileScaler
@@ -219,6 +219,45 @@ class ReservePolicyDataFileUserSim(MMCmodel):
 
         """
         self.scaler = ReservePolicy(self, scale_rate, startup_delay, shutdown_delay, reserved)
+        self.cluster = Cluster(self, density=density)
+        self.user_generator = DataFileGenerator(self, users_data_file_path)
+        self.cost_policy = HourMinimumBillablePolicy(self)
+        return MMCmodel.run(self)
+
+
+class TimeVaryReservePolicyDataFileUserSim(MMCmodel):
+    """Designed to run MMCmodel with Time Varying Reserve Policy against a user
+       arrival and departure scheduled from a data file containing interarrival
+       and service times.
+
+    """
+
+    def run(self, window_size, arrival_percentile, five_minute_counts_file,
+	    users_data_file_path, density, scale_rate, startup_delay,
+            shutdown_delay):
+        """Runs the simulation with the following arguments and returns result
+
+        Parameters:
+        window_size -- If an integer, it is the number of previous five-minute
+            counts to consider to build a percentile from.  If set to None, the
+            all previous values observed are seen.
+        arrival_percentile -- The percentile of observed five-minute counts, to
+            use as the value of R.  R is used as the number of seats at the end
+            of the scale operation.
+        five_minute_counts_file -- The path to a file containing all five-minute
+            arrival counts.
+	users_data_file_path -- a file path to the user data file with two
+            comma separated columns.  interarrival time, service time
+        density -- the number of application seats per virtual machine
+        scale_rate -- The interarrival time between scale events in seconds
+        startup_delay -- the time a server spends in the booting state
+        shutdown_delay -- the time a server spends in the shutting_down state
+
+        """
+	self.scaler = TimeVaryReservePolicy(self, scale_rate, startup_delay,
+					    shutdown_delay, window_size,
+					    arrival_percentile,
+                                            five_minute_counts_file)
         self.cluster = Cluster(self, density=density)
         self.user_generator = DataFileGenerator(self, users_data_file_path)
         self.cost_policy = HourMinimumBillablePolicy(self)

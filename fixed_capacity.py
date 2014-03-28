@@ -1,4 +1,5 @@
 import unittest
+import os
 
 from appsim.sim import FixedSizePolicyFixedPoissonSim, DataFilePolicyDataFileUserSim
 

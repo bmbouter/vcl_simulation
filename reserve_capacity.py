@@ -1,6 +1,7 @@
-import unittest
+import os
 
-from appsim.sim import ReservePolicyFixedPoissonSim, ReservePolicyDataFileUserSim
+from appsim.sim import ReservePolicyFixedPoissonSim, \
+    ReservePolicyDataFileUserSim, TimeVaryReservePolicyDataFileUserSim
 
 reserved = 2
 scale_rate = 1
@@ -48,6 +49,22 @@ class main(object):
             #self.print_simple_results(results)
             self.print_all_results(results)
 
+    def time_vary_reserve_policy_data_file_user_sim_table(self):
+        param_name = 'percentile,window_size'
+        self.print_results_header(param_name)
+	five_minute_counts_file = 'data/2008_five_minute_counts.csv'
+        users_data_file_path = 'data/2008_year_arrivals.txt'
+	for percentile in [0.90, 0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.0]:
+            for window_size in [12, 144, 288, 2016]:
+                time_vary_reserve = TimeVaryReservePolicyDataFileUserSim()
+                results = time_vary_reserve.run(window_size, percentile, five_minute_counts_file, users_data_file_path, 2, 300, 300, 300)
+                #reserve.run(window_size, arrival_percentile, five_minute_counts_file, users_data_file_path, density, scale_rate, startup_delay, shutdown_delay):
+                results['param'] = '%s,%s' % (percentile, window_size)
+                #results['param_name'] = '%s,%s' % ('percentile', param_name)
+                #self.write_bp_timescale_raw_to_file('reserve', results)
+                #self.print_simple_results(results)
+                self.print_all_results(results)
+
     def write_bp_timescale_raw_to_file(self, model_name, results):
         base_path = "data/bp_timescale_raw"
         filename_template = "%s_%s_%s.txt"
@@ -76,6 +93,23 @@ class main(object):
                 self.print_simple_results(results)
                 #self.print_all_results(results)
 
+    def time_vary_reserve_policy_data_file_user_sim_density_analysis(self):
+        param_name = 'Q'
+	W = 288
+	five_minute_counts_file = 'data/2008_five_minute_counts.csv'
+        users_data_file_path = 'data/2008_year_arrivals.txt'
+        #self.print_results_header(param_name)
+        for Q in [0.9, 0.925, 0.95, 0.975, 1.0]:
+            for density in [1, 2, 3, 4, 5]:
+                time_vary_reserve = TimeVaryReservePolicyDataFileUserSim()
+                results = time_vary_reserve.run(W, Q, five_minute_counts_file, users_data_file_path, density, 300, 300, 300)
+                #reserve.run(window_size, arrival_percentile, five_minute_counts_file, users_data_file_path, density, scale_rate, startup_delay, shutdown_delay):
+                results['param'] = Q
+                results['param_name'] = param_name
+                results['density'] = density
+                self.print_simple_results(results)
+                #self.print_all_results(results)
+
     def print_results_header(self, param_name):
         print "%s,bp_batch_mean,bp_batch_mean_delta,bp_batch_mean_percent_error,utilization,bp_by_hour_50,bp_by_hour_95,bp_by_hour_99,bp_by_hour_mean,bp_by_day_50,bp_by_day_95,bp_by_day_99,bp_by_day_mean,bp_by_week_50,bp_by_week_95,bp_by_week_99,bp_by_week_mean,bp_by_month_50,bp_by_month_95,bp_by_month_99,bp_by_month_mean,bp_by_year_50,bp_by_year_95,bp_by_year_99,bp_by_year_mean,billable_time,lost_billable_time,server_cost_time,num_servers,ns_delta" % param_name
 
@@ -93,5 +127,7 @@ if __name__ == "__main__":
     if not os.path.isfile('reserve_capacity.py'):
         print 'Please run in the same directory as reserve_capacity.py'
         exit()
-    main().reserve_policy_data_file_user_sim_table()
+    #main().reserve_policy_data_file_user_sim_table()
+    #main().time_vary_reserve_policy_data_file_user_sim_table()
     #main().reserve_policy_data_file_user_sim_density_analysis()
+    main().time_vary_reserve_policy_data_file_user_sim_density_analysis()
