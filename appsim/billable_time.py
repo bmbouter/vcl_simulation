@@ -17,7 +17,7 @@ class BillablePolicy(object):
         billable_time = self.compute_billable_time()
         lost_billable_time = self.compute_lost_billable_time()
         server_cost_time = self.compute_server_cost_time()
-	return {'billable_time': billable_time, 'lost_billable_time': lost_billable_time,
+        return {'billable_time': billable_time, 'lost_billable_time': lost_billable_time,
                 'server_cost_time': server_cost_time}
 
     def compute_billable_time(self):
