@@ -20,7 +20,7 @@ class FixedSizePolicy(Scale):
         scale_rate -- The interarrival time between scale events in seconds
         startup_delay -- the time a server spends in the booting state
         shutdown_delay -- the time a server spends in the shutting_down state
-	num_vms_in_cluster -- the integer number of virtual machines that
+        num_vms_in_cluster -- the integer number of virtual machines that
             should be started
 
         """

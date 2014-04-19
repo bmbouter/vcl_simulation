@@ -32,9 +32,9 @@ class User(Process):
             self.sim.mBlocked.observe(1)
             self.sim.mLostServiceTimes.observe(stime)
         else:
-            yield request, self, server
             self.sim.mBlocked.observe(0)
+            self.sim.mAcceptServiceTimes.observe(stime)
+            yield request, self, server
             yield hold, self, stime
-            self.sim.msT.observe(stime)
             yield release, self, server
 

@@ -44,7 +44,7 @@ class Scale(Process):
             not_to_be_shut_off_list = []
 
             servers_to_start, servers_to_stop = self.scaler_logic()
-	    stopped_count = 0
+            stopped_count = 0
 
             for server in range(servers_to_start):
                 if self.sim.cluster.shutting_down:
@@ -84,7 +84,8 @@ class Scale(Process):
             for server in self.sim.cluster.shutting_down:
                 if self.sim.now() >= server.power_off_time:
                     #raw_input('DELETING server %d' % server.rank)
-                    self.sim.mServerProvisionLength.observe(self.sim.now() - server.start_time)  # monitor the servers provision, deprovision time
+                    server_deployed_time = self.sim.now() - server.start_time
+                    self.sim.mServerProvisionLength.observe(server_deployed_time, t=server.start_time)  # monitor servers provision length and start_time
                     Cluster.total_deleted += 1
                     self.sim.cluster.shutting_down.remove(server)
 
@@ -101,8 +102,8 @@ class Scale(Process):
         return self.scale_rate
 
     def scaling_complete(self, stopped_count):
-	"""A callback function which is called after scaling is complete with
-	the number of servers stopped.  If a scaler policy does not override
+        """A callback function which is called after scaling is complete with
+        the number of servers stopped.  If a scaler policy does not override
         this funciton it does nothing.
 
         """

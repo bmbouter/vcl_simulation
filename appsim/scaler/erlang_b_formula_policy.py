@@ -11,7 +11,7 @@ def ErlangBLossEquation(offered_traffic_in_erlangs, num_servers):
     numerator = (math.pow(offered_traffic_in_erlangs, num_servers)) / math.factorial(num_servers)
     denominator = 0
     for k in range(0, num_servers + 1):
-	denominator = denominator + math.pow(offered_traffic_in_erlangs, k) / math.factorial(k)
+        denominator = denominator + math.pow(offered_traffic_in_erlangs, k) / math.factorial(k)
     return numerator / denominator
 
 def erlang_b_loss_recursive(E, c):
@@ -58,7 +58,7 @@ class ErlangBFormulaFixedPolicy(Scale):
         scale_rate -- The interarrival time between scale events in seconds
         startup_delay -- the time a server spends in the booting state
         shutdown_delay -- the time a server spends in the shutting_down state
-	worst_bp -- ensure the blocking probability does exceed this value as
+        worst_bp -- ensure the blocking probability does exceed this value as
             computed by the closed form Erlang B formula.
         lamda -- the parameter to a Poisson distribution (in seconds)
             which defines the arrival process
@@ -114,7 +114,7 @@ class ErlangBFormulaDataPolicy(Scale):
     """
 
     def __init__(self, sim, scale_rate, startup_delay,
-	    shutdown_delay, worst_bp, pred_user_count_file_path, mu, lag):
+                 shutdown_delay, worst_bp, pred_user_count_file_path, mu, lag):
         """Initializes a ErlangBFormulaDataPolicy object
 
         parameters:
@@ -123,16 +123,16 @@ class ErlangBFormulaDataPolicy(Scale):
         scale_rate -- The interarrival time between scale events in seconds
         startup_delay -- the time a server spends in the booting state
         shutdown_delay -- the time a server spends in the shutting_down state
-	worst_bp -- ensure the blocking probability does exceed this value as
+        worst_bp -- ensure the blocking probability does exceed this value as
             computed by the closed form Erlang B formula.
-	pred_user_count_file_path -- a file path to the arrival predictions
-	    data file with one comma separated column containing user count
+        pred_user_count_file_path -- a file path to the arrival predictions
+            data file with one comma separated column containing user count
             values
         mu -- the parameter to a Poisson distribution (in seconds)
-	    which defines the service time process. Used for prediction
+            which defines the service time process. Used for prediction
             purposes.
-	lag -- an integer number of periods to lag values in
-	    pred_user_count_file_path by. Effectively, this introduces lag
+        lag -- an integer number of periods to lag values in
+            pred_user_count_file_path by. Effectively, this introduces lag
             number of zeros at the beginning of pred_user_count_file
 
         """
@@ -149,9 +149,9 @@ class ErlangBFormulaDataPolicy(Scale):
         self.capacity_plan = self.parse_pred_user_count()
 
     def parse_pred_user_count(self):
-	"""Parses the data file for provisioning and deprovisioning events"""
+        """Parses the data file for provisioning and deprovisioning events"""
         events = []
-	dataReader = csv.reader(open(self.pred_user_count_file_path, 'rb'),
+        dataReader = csv.reader(open(self.pred_user_count_file_path, 'rb'),
                                          delimiter=',')
         memoizer = {}
         for row in dataReader:

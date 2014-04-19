@@ -36,7 +36,7 @@ class GenericDataFileScaler(Scale):
                              shutdown_delay=shutdown_delay)
 
     def parse_provisioning_events(self):
-	"""Parses the data file for provisioning and deprovisioning events"""
+        """Parses the data file for provisioning and deprovisioning events"""
         events = []
         dataReader = csv.reader(open(self.data_path, 'rb'), delimiter=',')
         for row in dataReader:

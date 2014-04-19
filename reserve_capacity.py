@@ -2,6 +2,7 @@ import os
 
 from appsim.sim import ReservePolicyFixedPoissonSim, \
     ReservePolicyDataFileUserSim, TimeVaryReservePolicyDataFileUserSim
+from output_utils import print_results_header, print_all_results, print_simple_results
 
 reserved = 2
 scale_rate = 1
@@ -37,7 +38,7 @@ class main(object):
 
     def reserve_policy_data_file_user_sim_table(self):
         param_name = 'R'
-        self.print_results_header(param_name)
+        print_results_header(param_name)
         for R in range(1,41):
             reserve = ReservePolicyDataFileUserSim()
             users_data_file_path = 'data/2008_year_arrivals.txt'
@@ -46,15 +47,15 @@ class main(object):
             results['param'] = R
             results['param_name'] = param_name
             self.write_bp_timescale_raw_to_file('reserve', results)
-            #self.print_simple_results(results)
-            self.print_all_results(results)
+            #print_simple_results(results)
+            print_all_results(results)
 
     def time_vary_reserve_policy_data_file_user_sim_table(self):
         param_name = 'percentile,window_size'
-        self.print_results_header(param_name)
-	five_minute_counts_file = 'data/2008_five_minute_counts.csv'
+        print_results_header(param_name)
+        five_minute_counts_file = 'data/2008_five_minute_counts.csv'
         users_data_file_path = 'data/2008_year_arrivals.txt'
-	for percentile in [0.90, 0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.0]:
+        for percentile in [0.90, 0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.0]:
             for window_size in [12, 144, 288, 2016]:
                 time_vary_reserve = TimeVaryReservePolicyDataFileUserSim()
                 results = time_vary_reserve.run(window_size, percentile, five_minute_counts_file, users_data_file_path, 2, 300, 300, 300)
@@ -62,8 +63,8 @@ class main(object):
                 results['param'] = '%s,%s' % (percentile, window_size)
                 #results['param_name'] = '%s,%s' % ('percentile', param_name)
                 #self.write_bp_timescale_raw_to_file('reserve', results)
-                #self.print_simple_results(results)
-                self.print_all_results(results)
+                #print_simple_results(results)
+                print_all_results(results)
 
     def write_bp_timescale_raw_to_file(self, model_name, results):
         base_path = "data/bp_timescale_raw"
@@ -80,7 +81,7 @@ class main(object):
 
     def reserve_policy_data_file_user_sim_density_analysis(self):
         param_name = 'R'
-        #self.print_results_header(param_name)
+        #print_results_header(param_name)
         for R in [5, 10, 15, 20]:
             for density in [1, 2, 3, 4, 5]:
                 reserve = ReservePolicyDataFileUserSim()
@@ -90,15 +91,15 @@ class main(object):
                 results['param'] = R
                 results['param_name'] = param_name
                 results['density'] = density
-                self.print_simple_results(results)
-                #self.print_all_results(results)
+                print_simple_results(results, timescale='weekly_99_percentile')
+                #print_all_results(results)
 
     def time_vary_reserve_policy_data_file_user_sim_density_analysis(self):
         param_name = 'Q'
-	W = 288
-	five_minute_counts_file = 'data/2008_five_minute_counts.csv'
+        W = 288
+        five_minute_counts_file = 'data/2008_five_minute_counts.csv'
         users_data_file_path = 'data/2008_year_arrivals.txt'
-        #self.print_results_header(param_name)
+        #print_results_header(param_name)
         for Q in [0.9, 0.925, 0.95, 0.975, 1.0]:
             for density in [1, 2, 3, 4, 5]:
                 time_vary_reserve = TimeVaryReservePolicyDataFileUserSim()
@@ -107,21 +108,8 @@ class main(object):
                 results['param'] = Q
                 results['param_name'] = param_name
                 results['density'] = density
-                self.print_simple_results(results)
-                #self.print_all_results(results)
-
-    def print_results_header(self, param_name):
-        print "%s,bp_batch_mean,bp_batch_mean_delta,bp_batch_mean_percent_error,utilization,bp_by_hour_50,bp_by_hour_95,bp_by_hour_99,bp_by_hour_mean,bp_by_day_50,bp_by_day_95,bp_by_day_99,bp_by_day_mean,bp_by_week_50,bp_by_week_95,bp_by_week_99,bp_by_week_mean,bp_by_month_50,bp_by_month_95,bp_by_month_99,bp_by_month_mean,bp_by_year_50,bp_by_year_95,bp_by_year_99,bp_by_year_mean,billable_time,lost_billable_time,server_cost_time,num_servers,ns_delta" % param_name
-
-    def print_all_results(self, results):
-        r = results
-        print("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s" % (r['param'], r['bp_batch_mean'], r['bp_batch_mean_delta'], r['bp_batch_mean_percent_error'], r['utilization'], r['bp_by_hour']['bp_50percentile'], r['bp_by_hour']['bp_95percentile'], r['bp_by_hour']['bp_99percentile'], r['bp_by_hour']['bp_mean'], r['bp_by_day']['bp_50percentile'], r['bp_by_day']['bp_95percentile'], r['bp_by_day']['bp_99percentile'], r['bp_by_day']['bp_mean'], r['bp_by_week']['bp_50percentile'], r['bp_by_week']['bp_95percentile'], r['bp_by_week']['bp_99percentile'], r['bp_by_week']['bp_mean'], r['bp_by_month']['bp_50percentile'], r['bp_by_month']['bp_95percentile'], r['bp_by_month']['bp_99percentile'], r['bp_by_month']['bp_mean'], r['bp_by_year']['bp_50percentile'], r['bp_by_year']['bp_95percentile'], r['bp_by_year']['bp_99percentile'], r['bp_by_year']['bp_mean'], r['billable_time'], r['lost_billable_time'], r['server_cost_time'], r['num_servers'], r['ns_delta']))
-
-    def print_simple_results(self, results):
-        if 'density' in results:
-            print('%s,%s,%.4f,%.4f,%.4f' % (results['param'], results['density'], results['bp_batch_mean'], results['bp_batch_mean_delta'], results['utilization']))
-        else:
-            print('%s,%.4f,%.4f,%.4f' % (results['param'], results['bp_batch_mean'], results['bp_batch_mean_delta'], results['utilization']))
+                print_simple_results(results)
+                #print_all_results(results)
 
 if __name__ == "__main__":
     if not os.path.isfile('reserve_capacity.py'):
@@ -129,5 +117,5 @@ if __name__ == "__main__":
         exit()
     #main().reserve_policy_data_file_user_sim_table()
     #main().time_vary_reserve_policy_data_file_user_sim_table()
-    #main().reserve_policy_data_file_user_sim_density_analysis()
-    main().time_vary_reserve_policy_data_file_user_sim_density_analysis()
+    main().reserve_policy_data_file_user_sim_density_analysis()
+    #main().time_vary_reserve_policy_data_file_user_sim_density_analysis()

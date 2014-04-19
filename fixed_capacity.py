@@ -12,7 +12,7 @@ class main(unittest.TestCase):
         #fixed.run(num_vms_in_cluster, density, scale_rate, lamda, mu, startup_delay, shutdown_delay, num_customers)
         print results
         self.assertEqual(results['bp'], 0.026654259718775844)
-        self.assertEqual(results['utilization'], 0.401729062821548)
+        self.assertEqual(results['mean_utilization'], 0.401729062821548)
         self.assertEqual(results['bp_percent_error'], 0.08559767913065895)
 
     def test_scheduled_sim_test_1(self):
@@ -23,7 +23,7 @@ class main(unittest.TestCase):
         #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay, shutdown_delay)
         print results
         self.assertEqual(results['bp'], 0.02857999049331432)
-        self.assertEqual(results['utilization'], 0.40565218479169746)
+        self.assertEqual(results['mean_utilization'], 0.40565218479169746)
         self.assertEqual(results['bp_percent_error'], 0.017168472597705486)
 
 
