@@ -37,9 +37,17 @@ def transform_service_data(data, service_scale):
 
 def thin_arrival_data(data, arrival_scale):
     thinned_data = []
-    for observation in data:
+    for i, observation in enumerate(data):
         if random.random() <= arrival_scale:
             thinned_data.append(observation)
+        else:
+            try:
+                # If this arrival is culled, add the interarrival time to the
+                # next arrival
+                data[i+1][0] = data[i+1][0] + data[i][0]
+            except IndexError:
+                # If this is the last arrival, do nothing
+                pass
     return thinned_data
 
 def sample_random_service_time(data):
@@ -52,16 +60,25 @@ def add_arrival_data(data, arrival_scale):
         transformed_data.append(observation)
         if random.random() <= prob_of_addition:
             # add in new arrival in between this one and the next
-            current_arrival_time = data[i][0]
+            current_interarrival_time = data[i][0]
             try:
-                next_arrival_time = data[i+1][0]
+                next_interarrival_time = data[i+1][0]
             except IndexError:
-                next_arrival_time = data[i-1][0]
-            numrange = sorted([current_arrival_time, next_arrival_time])
-            new_arrival_time = random.randint(*numrange)
+                # If this is the last arrival, use the distance to the i - 1
+                # interarrival time
+                next_interarrival_time = data[i-1][0]
+            numrange = sorted([current_interarrival_time, next_interarrival_time])
+            new_interarrival_time = random.randint(*numrange)
             new_service_time = sample_random_service_time(data)
-            new_observation = [new_arrival_time, new_service_time]
+            new_observation = [new_interarrival_time, new_service_time]
             transformed_data.append(new_observation)
+            try:
+                # Update the interarrival time of the next arrival
+                data[i+1][0] = data[i+1][0] - new_interarrival_time
+            except IndexError:
+                # If the new arrival is the last one there is no later arrival
+                # to update, do nothing
+                pass
     return transformed_data
 
 def transform_arrival_data(data, arrival_scale):
@@ -92,7 +109,6 @@ def clean_data(data):
 def main():
     data = read_data()
     data = clean_data(data)
-    add_arrival_data(data, 1.2)
     generate_all_traffic_environments(data)
 
 if __name__ == "__main__":
