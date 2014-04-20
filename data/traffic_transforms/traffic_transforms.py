@@ -1,3 +1,4 @@
+import copy
 import os
 import random
 
@@ -92,8 +93,9 @@ def transform_traffic(data, arrival_scale, service_scale, filename):
     data = transform_arrival_data(data, arrival_scale)
     write_data(data, filename)
 
-def generate_all_traffic_environments(data):
+def generate_all_traffic_environments(original_data):
     for arrival_scale, service_scale, filename in traffic_condition_iterator():
+        data = copy.deepcopy(original_data)
         output_string = 'Generating (arrival=%s, service=%s)'
         print output_string % (arrival_scale, service_scale)
         transform_traffic(data, arrival_scale, service_scale, filename)
@@ -107,9 +109,9 @@ def clean_data(data):
     return clean_data
 
 def main():
-    data = read_data()
-    data = clean_data(data)
-    generate_all_traffic_environments(data)
+    original_data = read_data()
+    original_data = clean_data(original_data)
+    generate_all_traffic_environments(original_data)
 
 if __name__ == "__main__":
     if not os.path.isfile('traffic_transforms.py'):
