@@ -1,8 +1,6 @@
 import os
 import random
 
-import numpy as np
-
 def read_data():
     arrival_data = open('../2008_year_arrivals.txt', 'r')
     data = []
@@ -32,15 +30,9 @@ def traffic_condition_iterator(arrival_start=0.5, service_start=0.5, arrival_ste
             service_scale = service_scale + step_size
         arrival_scale = arrival_scale + step_size
 
-def get_service_time_mu_and_sigma(data):
-    service_data = [item[1] for item in data]
-    mu = np.average(service_data)
-    sigma = np.var(service_data)
-    return (mu, sigma)
-
 def transform_service_data(data, service_scale):
     for i, observation in enumerate(data):
-        data[i][1] = data[i][1] * service_scale
+        data[i][1] = int(data[i][1] * service_scale)
     return data
 
 def thin_arrival_data(data, arrival_scale):
@@ -50,8 +42,10 @@ def thin_arrival_data(data, arrival_scale):
             thinned_data.append(observation)
     return thinned_data
 
+def sample_random_service_time(data):
+    return random.choice(data)[1]
+
 def add_arrival_data(data, arrival_scale):
-    mu, sigma = get_service_time_mu_and_sigma(data)
     prob_of_addition = arrival_scale - 1.0
     transformed_data = []
     for i, observation in enumerate(data):
@@ -65,7 +59,7 @@ def add_arrival_data(data, arrival_scale):
                 next_arrival_time = data[i-1][0]
             numrange = sorted([current_arrival_time, next_arrival_time])
             new_arrival_time = random.randint(*numrange)
-            new_service_time = random.normalvariate(mu, sigma)
+            new_service_time = sample_random_service_time(data)
             new_observation = [new_arrival_time, new_service_time]
             transformed_data.append(new_observation)
     return transformed_data
