@@ -58,16 +58,13 @@ class DataFileGenerator(Process):
 
         dataReader = csv.reader(open(self.data_path, 'rb'), delimiter=',')
         user_num = 1
-        skip_count = 0
         for row in dataReader:
             interarrival_time = float(row[0])
             service_time = float(row[1])
             if service_time < 0:
-                skip_count = skip_count + 1
-                continue
+                raise Exception('Service time should not be less than 0')
             yield hold, self, interarrival_time
             L = User("User %s" % user_num, sim=self.sim)
             self.sim.activate(L, L.execute(service_time, self.sim.cluster), delay=0)
             user_num = user_num + 1
-        #print 'skip_count = %s' % skip_count
         raise NoMoreUsersException()
