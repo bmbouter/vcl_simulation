@@ -62,7 +62,6 @@ class MMCmodel(Simulation, UtilizationStatisticsMixin):
 
     def finalize_simulation(self):
         if self.now() >= SECONDS_IN_A_YEAR:
-            import pdb;pdb.set_trace()
             raise Exception('Finalizing simulation after %s seconds is incorrect!' % SECONDS_IN_A_YEAR)
         self._adjust_mAcceptServiceTimes()
         self._adjust_mLostServiceTimes()
