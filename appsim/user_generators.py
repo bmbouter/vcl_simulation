@@ -65,7 +65,7 @@ class DataFileGenerator(Process):
             if service_time < 0:
                 skip_count = skip_count + 1
                 continue
-            yield hold,self,interarrival_time
+            yield hold, self, interarrival_time
             L = User("User %s" % user_num, sim=self.sim)
             self.sim.activate(L, L.execute(service_time, self.sim.cluster), delay=0)
             user_num = user_num + 1
