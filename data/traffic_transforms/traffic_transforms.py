@@ -3,6 +3,22 @@ import os
 import random
 
 def read_data():
+    """
+    Read VCL arrival data.
+
+    Arrival are kept in a text file in the form:
+
+    143, 2456
+
+    This method reads all arrival data and creates a list of observations.
+    Each observation is also a list with the interarrival time in position 0
+    and service time in position 1.  Interarrival and service time data are
+    integers.
+
+    :return: A list of observations
+    :rtype: list
+
+    """
     arrival_data = open('../2008_year_arrivals.txt', 'r')
     data = []
     for line in arrival_data:
@@ -61,20 +77,22 @@ def add_arrival_data(data, arrival_scale):
         transformed_data.append(observation)
         if random.random() <= prob_of_addition:
             # add in new arrival in between this one and the next
-            current_interarrival_time = data[i][0]
             try:
                 next_interarrival_time = data[i+1][0]
             except IndexError:
                 # If this is the last arrival, use the distance to the i - 1
                 # interarrival time
                 next_interarrival_time = data[i-1][0]
-            numrange = sorted([current_interarrival_time, next_interarrival_time])
-            new_interarrival_time = random.randint(*numrange)
+            new_interarrival_time = random.randint(0, next_interarrival_time)
+            if new_interarrival_time < 0:
+                raise Exception('New interarrival time should never be negative!')
             new_service_time = sample_random_service_time(data)
             new_observation = [new_interarrival_time, new_service_time]
             transformed_data.append(new_observation)
             try:
                 # Update the interarrival time of the next arrival
+                if data[i+1][0] - new_interarrival_time < 0:
+                    Exception('Updating the next interval caused the next interval to become negative')
                 data[i+1][0] = data[i+1][0] - new_interarrival_time
             except IndexError:
                 # If the new arrival is the last one there is no later arrival
@@ -103,7 +121,8 @@ def generate_all_traffic_environments(original_data):
 def clean_data(data):
     clean_data = []
     for observation in data:
-        if observation[1] < 0:
+        if observation[0] < 0 or observation[1] < 0:
+            print 'skipping Observation(arrival=%s, service=%s)' % (observation[0], observation[1])
             continue
         clean_data.append(observation)
     return clean_data
