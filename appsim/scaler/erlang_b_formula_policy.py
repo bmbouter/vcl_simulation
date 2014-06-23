@@ -48,7 +48,7 @@ class ErlangBFormulaFixedPolicy(Scale):
 
     """
 
-    def __init__(self, sim, scale_rate, startup_delay,
+    def __init__(self, sim, scale_rate, startup_delay_func,
             shutdown_delay, worst_bp, lamda, mu):
         """Initializes a ErlangBFormulaFixedPolicy object
 
@@ -56,7 +56,8 @@ class ErlangBFormulaFixedPolicy(Scale):
         sim -- The Simulation containing a cluster cluster object this scale
             function is managing
         scale_rate -- The interarrival time between scale events in seconds
-        startup_delay -- the time a server spends in the booting state
+        startup_delay_func -- A callable that returns the time a server spends
+            in the booting state
         shutdown_delay -- the time a server spends in the shutting_down state
         worst_bp -- ensure the blocking probability does exceed this value as
             computed by the closed form Erlang B formula.
@@ -74,7 +75,7 @@ class ErlangBFormulaFixedPolicy(Scale):
         self.scaler_logic_called = False
         Scale.__init__(self, sim=sim,
                              scale_rate=scale_rate,
-                             startup_delay=startup_delay,
+                             startup_delay_func=startup_delay_func,
                              shutdown_delay=shutdown_delay)
 
     def scaler_logic(self):
@@ -113,7 +114,7 @@ class ErlangBFormulaDataPolicy(Scale):
 
     """
 
-    def __init__(self, sim, scale_rate, startup_delay,
+    def __init__(self, sim, scale_rate, startup_delay_func,
                  shutdown_delay, worst_bp, pred_user_count_file_path, mu, lag):
         """Initializes a ErlangBFormulaDataPolicy object
 
@@ -121,7 +122,8 @@ class ErlangBFormulaDataPolicy(Scale):
         sim -- The Simulation containing a cluster cluster object this scale
             function is managing
         scale_rate -- The interarrival time between scale events in seconds
-        startup_delay -- the time a server spends in the booting state
+        startup_delay_func -- A callable that returns the time a server spends
+            in the booting state
         shutdown_delay -- the time a server spends in the shutting_down state
         worst_bp -- ensure the blocking probability does exceed this value as
             computed by the closed form Erlang B formula.
@@ -144,7 +146,7 @@ class ErlangBFormulaDataPolicy(Scale):
         self.slot_iter = count(0)
         Scale.__init__(self, sim=sim,
                              scale_rate=scale_rate,
-                             startup_delay=startup_delay,
+                             startup_delay_func=startup_delay_func,
                              shutdown_delay=shutdown_delay)
         self.capacity_plan = self.parse_pred_user_count()
 

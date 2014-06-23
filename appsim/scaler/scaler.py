@@ -14,21 +14,22 @@ class Scale(Process):
     capacity from the application pool
     """
 
-    def __init__(self, sim, scale_rate, startup_delay, shutdown_delay):
+    def __init__(self, sim, scale_rate, startup_delay_func, shutdown_delay):
         """Initializes a Scale object
 
         parameters:
         sim -- The Simulation containing a cluster cluster object this scale
             function is managing
         scale_rate -- The interarrival time between scale events in seconds
-        startup_delay -- the time a server spends in the booting state
+        startup_delay_func -- A callable that returns the time a server spends
+            in the booting state
         shutdown_delay -- the time a server spends in the shutting_down state
 
         """
 
         self.sim = sim
         self.scale_rate = scale_rate
-        self.startup_delay = startup_delay
+        self.startup_delay_func = startup_delay_func
         self.shutdown_delay = shutdown_delay
         Process.__init__(self, name='Scaler Function', sim=self.sim)
 
@@ -54,7 +55,7 @@ class Scale(Process):
                     self.sim.cluster.active.append(new_vm)
                 else:
                     new_vm = self.sim.cluster.create_VM()
-                    new_vm.ready_time = self.sim.now() + self.startup_delay
+                    new_vm.ready_time = self.sim.now() + self.startup_delay_func()
                     new_vm.start_time = self.sim.now()
                     self.sim.cluster.booting.append(new_vm)
                     Cluster.total_prov += 1

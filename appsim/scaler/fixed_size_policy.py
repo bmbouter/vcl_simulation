@@ -10,7 +10,7 @@ class FixedSizePolicy(Scale):
 
     """
 
-    def __init__(self, sim, scale_rate, startup_delay,
+    def __init__(self, sim, scale_rate, startup_delay_func,
             shutdown_delay, num_vms_in_cluster):
         """Initializes a FixedSizePolicy object
 
@@ -18,7 +18,8 @@ class FixedSizePolicy(Scale):
         sim -- The Simulation containing a cluster cluster object this scale
             function is managing
         scale_rate -- The interarrival time between scale events in seconds
-        startup_delay -- the time a server spends in the booting state
+        startup_delay_func -- A callable that returns the time a server spends
+            in the booting state
         shutdown_delay -- the time a server spends in the shutting_down state
         num_vms_in_cluster -- the integer number of virtual machines that
             should be started
@@ -29,7 +30,7 @@ class FixedSizePolicy(Scale):
         self.scaler_logic_called = False
         Scale.__init__(self, sim=sim,
                              scale_rate=scale_rate,
-                             startup_delay=startup_delay,
+                             startup_delay_func=startup_delay_func,
                              shutdown_delay=shutdown_delay)
 
     def scaler_logic(self):

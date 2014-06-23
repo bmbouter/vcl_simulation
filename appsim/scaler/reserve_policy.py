@@ -14,7 +14,7 @@ class ReservePolicy(Scale):
 
     """
 
-    def __init__(self, sim, scale_rate, startup_delay,
+    def __init__(self, sim, scale_rate, startup_delay_func,
             shutdown_delay, reserved):
         """Initializes a ReservePolicy object
 
@@ -22,7 +22,8 @@ class ReservePolicy(Scale):
         sim -- The Simulation containing a cluster cluster object this scale
             function is managing
         scale_rate -- The interarrival time between scale events in seconds
-        startup_delay -- the time a server spends in the booting state
+        startup_delay_func -- A callable that returns the time a server spends
+            in the booting state
         shutdown_delay -- the time a server spends in the shutting_down state
         reserved -- The number of servers to have available at the end of a
             the scale operation
@@ -32,7 +33,7 @@ class ReservePolicy(Scale):
         self.reserved = reserved
         Scale.__init__(self, sim=sim,
                              scale_rate=scale_rate,
-                             startup_delay=startup_delay,
+                             startup_delay_func=startup_delay_func,
                              shutdown_delay=shutdown_delay)
 
     def scaler_logic(self):
@@ -69,7 +70,7 @@ class TimeVaryReservePolicy(Scale):
 
     """
 
-    def __init__(self, sim, scale_rate, startup_delay,
+    def __init__(self, sim, scale_rate, startup_delay_func,
             shutdown_delay, window_size, arrival_percentile,
             five_minute_counts_file):
         """Initializes a ReservePolicy object
@@ -78,7 +79,8 @@ class TimeVaryReservePolicy(Scale):
         sim -- The Simulation containing a cluster cluster object this scale
             function is managing
         scale_rate -- The interarrival time between scale events in seconds
-        startup_delay -- the time a server spends in the booting state
+        startup_delay_func -- A callable that returns the time a server spends
+            in the booting state
         shutdown_delay -- the time a server spends in the shutting_down state
         window_size -- If an integer, it is the number of previous five-minute
             counts to consider to build a percentile from.  If set to None, the
@@ -98,7 +100,7 @@ class TimeVaryReservePolicy(Scale):
         self.counts_file = open(self.five_minute_counts_file, 'r')
         Scale.__init__(self, sim=sim,
                              scale_rate=scale_rate,
-                             startup_delay=startup_delay,
+                             startup_delay_func=startup_delay_func,
                              shutdown_delay=shutdown_delay)
 
     def scaler_logic(self):

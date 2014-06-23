@@ -184,7 +184,7 @@ class FixedSizePolicyFixedPoissonSim(MMCmodel):
     """
 
     def run(self, num_vms_in_cluster, density, scale_rate, lamda, mu,
-            startup_delay, shutdown_delay, num_customers):
+            startup_delay_func, shutdown_delay, num_customers):
         """Runs the simulation with the following arguments and returns result
 
         Parameters:
@@ -196,12 +196,14 @@ class FixedSizePolicyFixedPoissonSim(MMCmodel):
             which defines the arrival process
         mu -- the parameter to a Poisson distribution (in seconds)
             which defines the service time process
-        startup_delay -- the time a server spends in the booting state
+        startup_delay_func -- A callable that returns the time a server spends
+            in the booting state
         shutdown_delay -- the time a server spends in the shutting_down state
         num_customers -- the number of users to simulate
 
         """
-        self.scaler = FixedSizePolicy(self, scale_rate, startup_delay, shutdown_delay, num_vms_in_cluster)
+        self.scaler = FixedSizePolicy(self, scale_rate, startup_delay_func,
+                                      shutdown_delay, num_vms_in_cluster)
         self.cluster = Cluster(self, density=density)
         self.user_generator = PoissonGenerator(self, num_customers, lamda, mu)
         return MMCmodel.run(self)
@@ -214,7 +216,7 @@ class ReservePolicyFixedPoissonSim(MMCmodel):
     """
 
     def run(self, reserved, density, scale_rate, lamda, mu,
-            startup_delay, shutdown_delay, num_customers):
+            startup_delay_func, shutdown_delay, num_customers):
         """Runs the simulation with the following arguments and returns result
 
         Parameters:
@@ -226,12 +228,14 @@ class ReservePolicyFixedPoissonSim(MMCmodel):
             which defines the arrival process
         mu -- the parameter to a Poisson distribution (in seconds)
             which defines the service time process
-        startup_delay -- the time a server spends in the booting state
+        startup_delay_func -- A callable that returns the time a server spends
+            in the booting state
         shutdown_delay -- the time a server spends in the shutting_down state
         num_customers -- the number of users to simulate
 
         """
-        self.scaler = ReservePolicy(self, scale_rate, startup_delay, shutdown_delay, reserved)
+        self.scaler = ReservePolicy(self, scale_rate, startup_delay_func,
+                                    shutdown_delay, reserved)
         self.cluster = Cluster(self, density=density)
         self.user_generator = PoissonGenerator(self, num_customers, lamda, mu)
         return MMCmodel.run(self)
@@ -245,7 +249,7 @@ class ReservePolicyDataFileUserSim(MMCmodel):
     """
 
     def run(self, reserved, users_data_file_path, density, scale_rate,
-            startup_delay, shutdown_delay):
+            startup_delay_func, shutdown_delay):
         """Runs the simulation with the following arguments and returns result
 
         Parameters:
@@ -255,11 +259,13 @@ class ReservePolicyDataFileUserSim(MMCmodel):
             comma separated columns.  interarrival time, service time
         density -- the number of application seats per virtual machine
         scale_rate -- The interarrival time between scale events in seconds
-        startup_delay -- the time a server spends in the booting state
+        startup_delay_func -- A callable that returns the time a server spends
+            in the booting state
         shutdown_delay -- the time a server spends in the shutting_down state
 
         """
-        self.scaler = ReservePolicy(self, scale_rate, startup_delay, shutdown_delay, reserved)
+        self.scaler = ReservePolicy(self, scale_rate, startup_delay_func,
+                                    shutdown_delay, reserved)
         self.cluster = Cluster(self, density=density)
         self.user_generator = DataFileGenerator(self, users_data_file_path)
         return MMCmodel.run(self)
@@ -273,7 +279,7 @@ class TimeVaryReservePolicyDataFileUserSim(MMCmodel):
     """
 
     def run(self, window_size, arrival_percentile, five_minute_counts_file,
-            users_data_file_path, density, scale_rate, startup_delay,
+            users_data_file_path, density, scale_rate, startup_delay_func,
             shutdown_delay):
         """Runs the simulation with the following arguments and returns result
 
@@ -290,12 +296,14 @@ class TimeVaryReservePolicyDataFileUserSim(MMCmodel):
             comma separated columns.  interarrival time, service time
         density -- the number of application seats per virtual machine
         scale_rate -- The interarrival time between scale events in seconds
-        startup_delay -- the time a server spends in the booting state
+        startup_delay_func -- A callable that returns the time a server spends
+            in the booting state
         shutdown_delay -- the time a server spends in the shutting_down state
 
         """
-        self.scaler = TimeVaryReservePolicy(self, scale_rate, startup_delay,
-                                            shutdown_delay, window_size,
+        self.scaler = TimeVaryReservePolicy(self, scale_rate,
+                                            startup_delay_func, shutdown_delay,
+                                            window_size,
                                             arrival_percentile,
                                             five_minute_counts_file)
         self.cluster = Cluster(self, density=density)
@@ -311,7 +319,7 @@ class DataFilePolicyDataFileUserSim(MMCmodel):
     """
 
     def run(self, prov_data_file_path, users_data_file_path, density,
-            startup_delay, shutdown_delay):
+            startup_delay_func, shutdown_delay):
         """Runs the simulation with the following arguments and returns result
 
         Parameters:
@@ -320,11 +328,13 @@ class DataFilePolicyDataFileUserSim(MMCmodel):
         users_data_file_path -- a file path to the user data file with two
             comma separated columns.  interarrival time, service time
         density -- the number of application seats per virtual machine
-        startup_delay -- the time a server spends in the booting state
+        startup_delay_func -- the time a server spends in the booting state
         shutdown_delay -- the time a server spends in the shutting_down state
 
         """
-        self.scaler = GenericDataFileScaler(self, startup_delay, shutdown_delay, prov_data_file_path)
+        self.scaler = GenericDataFileScaler(self, startup_delay_func,
+                                            shutdown_delay,
+                                            prov_data_file_path)
         self.cluster = Cluster(self, density=density)
         self.user_generator = DataFileGenerator(self, users_data_file_path)
         return MMCmodel.run(self)
@@ -338,7 +348,7 @@ class ErlangDataPolicyDataFileUserSim(MMCmodel):
     """
 
     def run(self, worst_bp, pred_user_count_file_path, mu, users_data_file_path,
-            lag, density, scale_rate, startup_delay, shutdown_delay):
+            lag, density, scale_rate, startup_delay_func, shutdown_delay):
         """Runs the simulation with the following arguments and returns result
 
         Parameters:
@@ -357,11 +367,16 @@ class ErlangDataPolicyDataFileUserSim(MMCmodel):
             number of zeros at the beginning of pred_user_count_file
         density -- the number of application seats per virtual machine
         scale_rate -- The interarrival time between scale events in seconds
-        startup_delay -- the time a server spends in the booting state
+        startup_delay_func -- A callable that returns the time a server spends
+            in the booting state
         shutdown_delay -- the time a server spends in the shutting_down state
 
         """
         self.cluster = Cluster(self, density=density)
-        self.scaler = ErlangBFormulaDataPolicy(self, scale_rate, startup_delay, shutdown_delay, worst_bp, pred_user_count_file_path, mu, lag)
+        self.scaler = ErlangBFormulaDataPolicy(self, scale_rate,
+                                               startup_delay_func,
+                                               shutdown_delay, worst_bp,
+                                               pred_user_count_file_path, mu,
+                                               lag)
         self.user_generator = DataFileGenerator(self, users_data_file_path)
         return MMCmodel.run(self)

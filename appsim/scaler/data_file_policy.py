@@ -14,14 +14,14 @@ class GenericDataFileScaler(Scale):
 
     """
 
-    def __init__(self, sim, startup_delay,
-            shutdown_delay, data_path):
+    def __init__(self, sim, startup_delay_func, shutdown_delay, data_path):
         """Initializes a GenericDataFileScaler object
 
         parameters:
         sim -- The Simulation containing a cluster cluster object this scale
             function is managing
-        startup_delay -- the time a server spends in the booting state
+        startup_delay_func -- A callable that returns the time a server spends
+            in the booting state
         shutdown_delay -- the time a server spends in the shutting_down state
         data_path -- the full path to the data file
 
@@ -32,7 +32,7 @@ class GenericDataFileScaler(Scale):
         self.prov_events = self.parse_provisioning_events()
         Scale.__init__(self, sim=sim,
                              scale_rate=0,
-                             startup_delay=startup_delay,
+                             startup_delay_func=startup_delay_func,
                              shutdown_delay=shutdown_delay)
 
     def parse_provisioning_events(self):

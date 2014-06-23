@@ -44,7 +44,7 @@ class OdePolicy(Scale):
 
     """
 
-    def __init__(self, sim, scale_rate, startup_delay,
+    def __init__(self, sim, scale_rate, startup_delay_func,
             shutdown_delay, delta, worst_bp, lamda, mu):
         """Initializes an OdePolicy object
 
@@ -52,7 +52,8 @@ class OdePolicy(Scale):
         sim -- The Simulation containing a cluster cluster object this scale
             function is managing
         scale_rate -- The interarrival time between scale events in seconds
-        startup_delay -- the time a server spends in the booting state
+        startup_delay_func -- A callable that returns the time a server spends
+            in the booting state
         shutdown_delay -- the time a server spends in the shutting_down state
         delta -- the number of the seconds in the future the scaler should
             manage the blocking probability
@@ -71,7 +72,7 @@ class OdePolicy(Scale):
         self.mu = mu
         Scale.__init__(self, sim=sim,
                              scale_rate=scale_rate,
-                             startup_delay=startup_delay,
+                             startup_delay_func=startup_delay_func,
                              shutdown_delay=shutdown_delay)
 
     def scaler_logic(self):
