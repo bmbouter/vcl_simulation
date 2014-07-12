@@ -2,6 +2,7 @@ import unittest
 import os
 
 from appsim.sim import DataFilePolicyDataFileUserSim, ErlangDataPolicyDataFileUserSim
+from common import fixed_startup_delay
 from output_utils import print_results_header, print_all_results, print_simple_results
 
 reserved = 2
@@ -13,27 +14,30 @@ startup_delay = 0
 shutdown_delay = 0
 num_customers = 50000
 
+zero_second_startup_delay = fixed_startup_delay(0)
+three_hundred_second_startup_delay = fixed_startup_delay(300)
+
 class main(object):
     def scheduled_sim_test_2(self):
         scheduled = DataFilePolicyDataFileUserSim()
         prov_data_file_path = 'data/5_server_prov_schedule.csv'
         users_data_file_path = 'data/fixed_lambda_mu_user_schedule.csv'
-        results = scheduled.run(prov_data_file_path, users_data_file_path, 6, 0, 0)
-        #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay, shutdown_delay)
+        results = scheduled.run(prov_data_file_path, users_data_file_path, 6, zero_second_startup_delay, 0)
+        #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay_func, shutdown_delay)
         print results
 
     def second_half_vcl_data_scheduled_sim(self):
         scheduled = DataFilePolicyDataFileUserSim()
         prov_data_file_path = 'data/20_server_prov_schedule.csv'
         users_data_file_path = 'data/second_half_year_arrivals.txt'
-        first_results = scheduled.run(prov_data_file_path, users_data_file_path, 5, 0, 0)
-        #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay, shutdown_delay)
+        first_results = scheduled.run(prov_data_file_path, users_data_file_path, 5, zero_second_startup_delay, 0)
+        #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay_func, shutdown_delay)
         print first_results
         scheduled = DataFilePolicyDataFileUserSim()
         prov_data_file_path = 'data/1_server_prov_schedule.csv'
         users_data_file_path = 'data/second_half_year_arrivals.txt'
-        second_results = scheduled.run(prov_data_file_path, users_data_file_path, 100, 0, 0)
-        #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay, shutdown_delay)
+        second_results = scheduled.run(prov_data_file_path, users_data_file_path, 100, zero_second_startup_delay, 0)
+        #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay_func, shutdown_delay)
         print second_results
 
 
@@ -42,8 +46,8 @@ class main(object):
         #prov_data_file_path = 'data/first_half_year_provisioning_schedule.csv'
         prov_data_file_path = 'data/2008_optimal_provisioning_schedule.csv'
         users_data_file_path = 'data/2009_year_arrivals.txt'
-        results = scheduled.run(prov_data_file_path, users_data_file_path, 2, 0, 0)
-        #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay, shutdown_delay)
+        results = scheduled.run(prov_data_file_path, users_data_file_path, 2, zero_second_startup_delay, 0)
+        #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay_func, shutdown_delay)
         print results
 
     def fixed_policy_user_arrivals(self):
@@ -53,8 +57,8 @@ class main(object):
             scheduled = DataFilePolicyDataFileUserSim()
             prov_data_file_path = 'data/1_server_prov_schedule.csv'
             users_data_file_path = 'data/2008_year_arrivals.txt'
-            results = scheduled.run(prov_data_file_path, users_data_file_path, capacity, 0, 0)
-            #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay, shutdown_delay)
+            results = scheduled.run(prov_data_file_path, users_data_file_path, capacity, zero_second_startup_delay, 0)
+            #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay_func, shutdown_delay)
             results['param'] = capacity
             results['param_name'] = param_name
             self.write_bp_timescale_raw_to_file('fixed', results)
@@ -83,10 +87,9 @@ class main(object):
         density = 2
         lag = 0
         scale_rate = 300
-        startup_delay = 0
         shutdown_delay = 300
-        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay)
-        # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay):
+        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, zero_second_startup_delay, shutdown_delay)
+        # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
         results['param'] = 'poisson_known_in_advance'
         print_simple_results(results)
 
@@ -102,10 +105,9 @@ class main(object):
             density = 2
             lag = 1
             scale_rate = 300
-            startup_delay = 300
             shutdown_delay = 300
-            results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay)
-            # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay):
+            results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
+            # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
             results['param'] = k
             results['param_name'] = param_name
             self.write_bp_timescale_raw_to_file('ma', results)
@@ -125,10 +127,9 @@ class main(object):
             density = 2
             lag = 1
             scale_rate = 300
-            startup_delay = 300
             shutdown_delay = 300
-            results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay)
-            # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay):
+            results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
+            # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
             results['param'] = alpha
             results['param_name'] = param_name
             self.write_bp_timescale_raw_to_file('ema', results)
@@ -144,10 +145,9 @@ class main(object):
         density = 2
         lag = 1
         scale_rate = 300
-        startup_delay = 300
         shutdown_delay = 300
-        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay)
-        # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay):
+        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
+        # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
         results['param'] = 'AR(2)'
         print_simple_results(results)
         #print_all_results(results)
@@ -161,10 +161,9 @@ class main(object):
             mu = 1 / 4957.567
             lag = 1
             scale_rate = 300
-            startup_delay = 300
             shutdown_delay = 300
-            results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay)
-            # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay):
+            results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
+            # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
             results['param'] = 'AR(2)'
             results['density'] = density
             print_simple_results(results, timescale='weekly_99_percentile')
@@ -179,10 +178,9 @@ class main(object):
         density = 2
         lag = 1
         scale_rate = 300
-        startup_delay = 300
         shutdown_delay = 300
-        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay)
-        # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay):
+        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
+        # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
         results['param'] = 'mixed_AR(2)'
         print_simple_results(results)
         #print_all_results(results)
@@ -196,10 +194,9 @@ class main(object):
             mu = 1 / 4957.567
             lag = 1
             scale_rate = 300
-            startup_delay = 300
             shutdown_delay = 300
-            results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay)
-            # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay):
+            results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
+            # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
             results['param'] = 'mixed_AR(2)'
             results['density'] = density
             print_simple_results(results, timescale='weekly_99_percentile')
@@ -214,8 +211,8 @@ class main(object):
                 scheduled = DataFilePolicyDataFileUserSim()
                 prov_data_file_path = 'data/%s_server_prov_schedule.csv' % num_servers
                 users_data_file_path = 'data/2008_year_arrivals.txt'
-                results = scheduled.run(prov_data_file_path, users_data_file_path, density, 0, 0)
-                #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay, shutdown_delay)
+                results = scheduled.run(prov_data_file_path, users_data_file_path, density, zero_second_startup_delay, 0)
+                #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay_func, shutdown_delay)
                 results['param'] = capacity
                 results['param_name'] = param_name
                 results['density'] = density
@@ -235,10 +232,9 @@ class main(object):
                 mu = 1 / 4957.567
                 lag = 1
                 scale_rate = 300
-                startup_delay = 300
                 shutdown_delay = 300
-                results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay)
-                # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay):
+                results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
+                # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
                 results['param'] = k
                 results['param_name'] = param_name
                 results['density'] = density
@@ -258,10 +254,9 @@ class main(object):
                 mu = 1 / 4957.567
                 lag = 1
                 scale_rate = 300
-                startup_delay = 300
                 shutdown_delay = 300
-                results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay)
-                # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay, shutdown_delay):
+                results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
+                # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
                 results['param'] = alpha
                 results['param_name'] = param_name
                 results['density'] = density
@@ -285,4 +280,3 @@ if __name__ == "__main__":
     #main().fixed_policy_density_analysis()
     #main().moving_average_policy_density_analysis()
     #main().exponential_moving_average_policy_density_analysis()
-
