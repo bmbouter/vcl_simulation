@@ -1,7 +1,6 @@
 import os
 
-from appsim.sim import ReservePolicyFixedPoissonSim, \
-    ReservePolicyDataFileUserSim, TimeVaryReservePolicyDataFileUserSim
+from appsim.sim import ReservePolicyDataFileUserSim, TimeVaryReservePolicyDataFileUserSim
 from common import fixed_startup_delay
 from output_utils import print_results_header, print_all_results, print_simple_results
 
