@@ -18,6 +18,16 @@ def raise_exception_if_negative_startup_value(f):
     return wrapper
 
 
+def truncate_at_zero(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        startup_time = -1
+        while startup_time <= 0:
+            startup_time = f(*args, **kwargs)
+        return startup_time
+    return wrapper
+
+
 def fixed_startup_delay(startup_delay):
     return lambda: startup_delay
 
@@ -27,7 +37,7 @@ def gamma_startup_delay(alpha, beta):
 
 
 def normal_distribution_startup_delay(mu, sigma):
-    @raise_exception_if_negative_startup_value
+    @truncate_at_zero
     def foo():
         return random.normalvariate(mu, sigma)
     return foo
