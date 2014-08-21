@@ -89,6 +89,27 @@ def reserve_policy_data_file_user_sim_startup_delay_analysis():
         #print_all_results(results)
 
 
+def reserve_policy_data_file_user_sim_shutdown_delay_analysis():
+    startup_delay_sigma_values = range(0, 401, 50)
+    param_name = 'sigma'
+    #print_results_header(param_name)
+    R = 32
+    density = 2
+    for sigma in startup_delay_sigma_values:
+        reserve = ReservePolicyDataFileUserSim()
+        users_data_file_path = 'data/2008_year_arrivals.txt'
+        scale_rate = 300
+        shutdown_delay = 300
+        startup_mean = 300
+        startup_delay_func = normal_distribution_startup_delay(startup_mean, sigma)
+        results = reserve.run(R, users_data_file_path, density, scale_rate, startup_delay_func, shutdown_delay)
+        #reserve.run(reserved, users_data_file_path, density, scale_rate, startup_delay_func, shutdown_delay)
+        results['param'] = sigma
+        results['param_name'] = param_name
+        print_simple_results(results, timescale='weekly_99_percentile')
+        #print_all_results(results)
+
+
 def time_vary_reserve_policy_data_file_user_sim_table():
     param_name = 'percentile,window_size'
     print_results_header(param_name)
@@ -132,6 +153,7 @@ if __name__ == "__main__":
     #reserve_policy_data_file_user_sim_table()
     #reserve_policy_data_file_user_sim_density_analysis()
     #reserve_policy_data_file_user_sim_startup_delay_analysis()
+    #reserve_policy_data_file_user_sim_shutdown_delay_analysis()
 
     #time_vary_reserve_policy_data_file_user_sim_table()
     #time_vary_reserve_policy_data_file_user_sim_density_analysis()

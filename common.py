@@ -1,4 +1,5 @@
 from functools import wraps
+import math
 import random
 
 
@@ -38,6 +39,17 @@ def gamma_startup_delay(alpha, beta):
 
 def normal_distribution_startup_delay(mu, sigma):
     @truncate_at_zero
-    def foo():
+    def func():
         return random.normalvariate(mu, sigma)
-    return foo
+    return func
+
+
+if __name__ == "__main__":
+    for sigma in range(0, 401, 50):
+        func = normal_distribution_startup_delay(300, sigma)
+        values = []
+        for i in range(1000000):
+            values.append(func())
+        mean = sum(values) / len(values)
+        variance = sum((mean - value) ** 2 for value in values) / len(values)
+        print "truncated ~N(300, %s) truncates to ~N(%0.2f, %0.2f)" % (sigma, mean, math.sqrt(variance))
