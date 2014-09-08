@@ -8,7 +8,6 @@ determine the average blocking probability.
 
 """
 from SimPy.Simulation import Resource, PriorityQ
-from random import expovariate, seed
 
 class Cluster(object):
 

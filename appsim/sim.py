@@ -1,5 +1,4 @@
 from random import seed
-import sqlite3
 
 from SimPy.Simulation import *
 

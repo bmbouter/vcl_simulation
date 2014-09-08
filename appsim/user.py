@@ -1,5 +1,3 @@
-from random import expovariate
-
 from SimPy.SimulationTrace import * ## Only change in program!
 
 class User(Process):

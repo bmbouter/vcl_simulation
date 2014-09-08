@@ -464,7 +464,7 @@ if __name__ == "__main__":
     #moving_average()
     #moving_average_policy_density_analysis()
     #moving_average_policy_startup_delay_analysis()
-    moving_average_policy_shutdown_delay_analysis()
+    #moving_average_policy_shutdown_delay_analysis()
 
     #exponential_moving_average()
     #exponential_moving_average_policy_density_analysis()
