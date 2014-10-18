@@ -167,11 +167,11 @@ def moving_average_policy_startup_delay_analysis():
 
 
 def moving_average_policy_shutdown_delay_analysis():
-    startup_delay_sigma_values = range(0, 401, 50)
-    param_name = 'sigma'
+    shutdown_delay_values = range(0, 1001, 100)
+    param_name = 'shutdown_delay'
     k = 1
     density = 2
-    for sigma in startup_delay_sigma_values:
+    for shutdown_delay in shutdown_delay_values:
         scheduled = ErlangDataPolicyDataFileUserSim()
         pred_user_count_file_path = 'data/ma_arrivals/arrivals_k_%s.txt' % k
         users_data_file_path = 'data/2008_year_arrivals.txt'
@@ -179,12 +179,9 @@ def moving_average_policy_shutdown_delay_analysis():
         mu = 1 / 4957.567
         lag = 1
         scale_rate = 300
-        shutdown_delay = 300
-        startup_mean = 300
-        startup_delay_func = normal_distribution_startup_delay(startup_mean, sigma)
-        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
+        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
         # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
-        results['param'] = sigma
+        results['param'] = shutdown_delay
         results['param_name'] = param_name
         print_simple_results(results, timescale='weekly_99_percentile')
         #print_all_results(results)
@@ -262,12 +259,12 @@ def exponential_moving_average_policy_startup_delay_analysis():
 
 
 def exponential_moving_average_policy_shutdown_delay_analysis():
-    startup_delay_sigma_values = range(0, 401, 50)
-    param_name = 'sigma'
+    shutdown_delay_values = range(0, 1001, 100)
+    param_name = 'shutdown_delay'
     #print_results_header(param_name)
     alpha = 0.16
     density = 2
-    for sigma in startup_delay_sigma_values:
+    for shutdown_delay in shutdown_delay_values:
         scheduled = ErlangDataPolicyDataFileUserSim()
         pred_user_count_file_path = 'data/ema_arrivals/arrivals_alpha_%s.txt' % alpha
         users_data_file_path = 'data/2008_year_arrivals.txt'
@@ -275,12 +272,9 @@ def exponential_moving_average_policy_shutdown_delay_analysis():
         mu = 1 / 4957.567
         lag = 1
         scale_rate = 300
-        shutdown_delay = 300
-        startup_mean = 300
-        startup_delay_func = normal_distribution_startup_delay(startup_mean, sigma)
-        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
+        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
         # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
-        results['param'] = sigma
+        results['param'] = shutdown_delay
         results['param_name'] = param_name
         print_simple_results(results, timescale='weekly_99_percentile')
         #print_all_results(results)
@@ -346,11 +340,11 @@ def autoregressive_policy_startup_delay_analysis():
 
 
 def autoregressive_policy_shutdown_delay_analysis():
-    startup_delay_sigma_values = range(0, 401, 50)
-    param_name = 'sigma'
+    shutdown_delay_values = range(0, 1001, 100)
+    param_name = 'shutdown_delay'
     #print_results_header(param_name)
     density = 2
-    for sigma in startup_delay_sigma_values:
+    for shutdown_delay in shutdown_delay_values:
         scheduled = ErlangDataPolicyDataFileUserSim()
         pred_user_count_file_path = 'data/auto_regressive/yearlong_autoregressive_five_minute_counts.txt'
         users_data_file_path = 'data/2008_year_arrivals.txt'
@@ -358,12 +352,9 @@ def autoregressive_policy_shutdown_delay_analysis():
         mu = 1 / 4957.567
         lag = 1
         scale_rate = 300
-        shutdown_delay = 300
-        startup_mean = 300
-        startup_delay_func = normal_distribution_startup_delay(startup_mean, sigma)
-        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
+        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
         # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
-        results['param'] = sigma
+        results['param'] = shutdown_delay
         results['param_name'] = param_name
         print_simple_results(results, timescale='weekly_99_percentile')
         #print_all_results(results)
@@ -429,11 +420,11 @@ def mixed_autoregressive_policy_startup_delay_analysis():
 
 
 def mixed_autoregressive_policy_shutdown_delay_analysis():
-    startup_delay_sigma_values = range(0, 401, 50)
-    param_name = 'sigma'
+    shutdown_delay_values = range(0, 1001, 100)
+    param_name = 'shutdown_delay'
     #print_results_header(param_name)
     density = 2
-    for sigma in startup_delay_sigma_values:
+    for shutdown_delay in shutdown_delay_values:
         scheduled = ErlangDataPolicyDataFileUserSim()
         pred_user_count_file_path = 'data/auto_regressive/mixed_autoregressive_five_minute_counts.txt'
         users_data_file_path = 'data/2008_year_arrivals.txt'
@@ -441,12 +432,9 @@ def mixed_autoregressive_policy_shutdown_delay_analysis():
         mu = 1 / 4957.567
         lag = 1
         scale_rate = 300
-        shutdown_delay = 300
-        startup_mean = 300
-        startup_delay_func = normal_distribution_startup_delay(startup_mean, sigma)
-        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
+        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
         # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
-        results['param'] = sigma
+        results['param'] = shutdown_delay
         results['param_name'] = param_name
         print_simple_results(results, timescale='weekly_99_percentile')
         #print_all_results(results)
