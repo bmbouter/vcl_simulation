@@ -1,6 +1,9 @@
+import os
+
 
 def nextAutoregressivePoint(phi_one, phi_two, x_t_minus_one, x_t_minus_two):
     return phi_one * x_t_minus_one + phi_two * x_t_minus_two
+
 
 def ARForecastStream(phi_one, phi_two, filename):
     with open(filename, 'r') as f:
@@ -14,15 +17,15 @@ def ARForecastStream(phi_one, phi_two, filename):
             x_t = nextAutoregressivePoint(phi_one, phi_two, x_t_minus_one, x_t_minus_two)
             yield x_t
 
-def AR_year():
+
+def AR_year(input_filename, output_filename):
     phi_one = 0.4108
     phi_two = 0.3368
-    filename = '../2008_five_minute_counts.csv'
-    output_filename = 'yearlong_autoregressive_five_minute_counts.txt'
     with open(output_filename, 'w') as f:
-        AR_forecast = ARForecastStream(phi_one, phi_two, filename)
+        AR_forecast = ARForecastStream(phi_one, phi_two, input_filename)
         for x_t in AR_forecast:
             f.write('%s\n' % x_t)
+
 
 def AR_mixed():
     summer_one = 0.2604
@@ -45,9 +48,11 @@ def AR_mixed():
             for x_t in AR_forecast:
                 f.write('%s\n' % x_t)
 
+
 def main():
-    AR_year()
+    AR_year('../2008_five_minute_counts.csv', 'yearlong_autoregressive_five_minute_counts.txt')
     AR_mixed()
+
 
 if __name__ == "__main__":
     if not os.path.isfile('autoregressive.py'):

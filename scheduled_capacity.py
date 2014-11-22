@@ -98,9 +98,89 @@ def fixed_policy_density_analysis():
             #print_all_results(results)
 
 
+def fixed_policy_segmented_busiest():
+    param_name = 'seats'
+    #print_results_header(param_name)
+    for capacity in [168]:
+        scheduled = DataFilePolicyDataFileUserSim()
+        prov_data_file_path = 'data/1_server_prov_schedule.csv'
+        users_data_file_path = 'data/day_cluster/2008_busiest_arrivals.txt'
+        results = scheduled.run(prov_data_file_path, users_data_file_path, capacity, zero_second_startup_delay, 0)
+        #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay_func, shutdown_delay)
+        results['param'] = capacity
+        results['param_name'] = param_name
+        write_bp_timescale_raw_to_file('fixed', results)
+        print_simple_results(results)
+        #print_all_results(results)
+
+
+def fixed_policy_segmented_slowest():
+    param_name = 'seats'
+    #print_results_header(param_name)
+    for capacity in [168]:
+        scheduled = DataFilePolicyDataFileUserSim()
+        prov_data_file_path = 'data/1_server_prov_schedule.csv'
+        users_data_file_path = 'data/day_cluster/2008_slowest_arrivals.txt'
+        results = scheduled.run(prov_data_file_path, users_data_file_path, capacity, zero_second_startup_delay, 0)
+        #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay_func, shutdown_delay)
+        results['param'] = capacity
+        results['param_name'] = param_name
+        write_bp_timescale_raw_to_file('fixed', results)
+        print_simple_results(results)
+        #print_all_results(results)
+
+
+def fixed_policy_segmented_mon_fri_semester():
+    param_name = 'seats'
+    #print_results_header(param_name)
+    for capacity in [168]:
+        scheduled = DataFilePolicyDataFileUserSim()
+        prov_data_file_path = 'data/1_server_prov_schedule.csv'
+        users_data_file_path = 'data/day_cluster/2008_mon_fri_semester_arrivals.txt'
+        results = scheduled.run(prov_data_file_path, users_data_file_path, capacity, zero_second_startup_delay, 0)
+        #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay_func, shutdown_delay)
+        results['param'] = capacity
+        results['param_name'] = param_name
+        write_bp_timescale_raw_to_file('fixed', results)
+        print_simple_results(results)
+        #print_all_results(results)
+
+
+def fixed_policy_segmented_winter_spring_break():
+    param_name = 'seats'
+    #print_results_header(param_name)
+    for capacity in [168]:
+        scheduled = DataFilePolicyDataFileUserSim()
+        prov_data_file_path = 'data/1_server_prov_schedule.csv'
+        users_data_file_path = 'data/day_cluster/2008_winter_spring_break_arrivals.txt'
+        results = scheduled.run(prov_data_file_path, users_data_file_path, capacity, zero_second_startup_delay, 0)
+        #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay_func, shutdown_delay)
+        results['param'] = capacity
+        results['param_name'] = param_name
+        write_bp_timescale_raw_to_file('fixed', results)
+        print_simple_results(results)
+        #print_all_results(results)
+
+
+def fixed_policy_not_segmented():
+    param_name = 'seats'
+    #print_results_header(param_name)
+    for capacity in [168]:
+        scheduled = DataFilePolicyDataFileUserSim()
+        prov_data_file_path = 'data/1_server_prov_schedule.csv'
+        users_data_file_path = 'data/2008_year_arrivals.txt'
+        results = scheduled.run(prov_data_file_path, users_data_file_path, capacity, zero_second_startup_delay, 0)
+        #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay_func, shutdown_delay)
+        results['param'] = capacity
+        results['param_name'] = param_name
+        write_bp_timescale_raw_to_file('fixed', results)
+        print_simple_results(results)
+        #print_all_results(results)
+
+
 def moving_average():
     param_name = 'k'
-    print_results_header(param_name)
+    #print_results_header(param_name)
     for k in range(1,51):
         scheduled = ErlangDataPolicyDataFileUserSim()
         pred_user_count_file_path = 'data/ma_arrivals/arrivals_k_%s.txt' % k
@@ -184,6 +264,116 @@ def moving_average_policy_shutdown_delay_analysis():
         results['param'] = shutdown_delay
         results['param_name'] = param_name
         print_simple_results(results, timescale='weekly_99_percentile')
+        #print_all_results(results)
+
+
+def moving_average_policy_segmented_busiest():
+    param_name = 'k'
+    #print_results_header(param_name)
+    for k in [1]:
+        scheduled = ErlangDataPolicyDataFileUserSim()
+        pred_user_count_file_path = 'data/day_cluster/busiest/ma_arrivals/arrivals_k_%s.txt' % k
+        users_data_file_path = 'data/day_cluster/2008_busiest_arrivals.txt'
+        worst_bp = 0.01
+        mu = 1 / 4957.567
+        density = 2
+        lag = 1
+        scale_rate = 300
+        shutdown_delay = 300
+        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
+        # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
+        results['param'] = k
+        results['param_name'] = param_name
+        write_bp_timescale_raw_to_file('ma', results)
+        print_simple_results(results)
+        #print_all_results(results)
+
+
+def moving_average_policy_segmented_slowest():
+    param_name = 'k'
+    #print_results_header(param_name)
+    for k in [1]:
+        scheduled = ErlangDataPolicyDataFileUserSim()
+        pred_user_count_file_path = 'data/day_cluster/slowest/ma_arrivals/arrivals_k_%s.txt' % k
+        users_data_file_path = 'data/day_cluster/2008_slowest_arrivals.txt'
+        worst_bp = 0.01
+        mu = 1 / 4957.567
+        density = 2
+        lag = 1
+        scale_rate = 300
+        shutdown_delay = 300
+        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
+        # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
+        results['param'] = k
+        results['param_name'] = param_name
+        write_bp_timescale_raw_to_file('ma', results)
+        print_simple_results(results)
+        #print_all_results(results)
+
+
+def moving_average_policy_segmented_mon_fri_semester():
+    param_name = 'k'
+    #print_results_header(param_name)
+    for k in [1]:
+        scheduled = ErlangDataPolicyDataFileUserSim()
+        pred_user_count_file_path = 'data/day_cluster/mon_fri_semester/ma_arrivals/arrivals_k_%s.txt' % k
+        users_data_file_path = 'data/day_cluster/2008_mon_fri_semester_arrivals.txt'
+        worst_bp = 0.01
+        mu = 1 / 4957.567
+        density = 2
+        lag = 1
+        scale_rate = 300
+        shutdown_delay = 300
+        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
+        # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
+        results['param'] = k
+        results['param_name'] = param_name
+        write_bp_timescale_raw_to_file('ma', results)
+        print_simple_results(results)
+        #print_all_results(results)
+
+
+def moving_average_policy_segmented_winter_spring_break():
+    param_name = 'k'
+    #print_results_header(param_name)
+    for k in [1]:
+        scheduled = ErlangDataPolicyDataFileUserSim()
+        pred_user_count_file_path = 'data/day_cluster/winter_spring_break/ma_arrivals/arrivals_k_%s.txt' % k
+        users_data_file_path = 'data/day_cluster/2008_winter_spring_break_arrivals.txt'
+        worst_bp = 0.01
+        mu = 1 / 4957.567
+        density = 2
+        lag = 1
+        scale_rate = 300
+        shutdown_delay = 300
+        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
+        # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
+        results['param'] = k
+        results['param_name'] = param_name
+        write_bp_timescale_raw_to_file('ma', results)
+        print_simple_results(results)
+        #print_all_results(results)
+
+
+def moving_average_policy_not_segmented():
+    param_name = 'k'
+    #print_results_header(param_name)
+    for k in [1]:
+        scheduled = ErlangDataPolicyDataFileUserSim()
+        pred_user_count_file_path = 'data/ma_arrivals/arrivals_k_%s.txt' % k
+        users_data_file_path = 'data/2008_year_arrivals.txt'
+        worst_bp = 0.01
+        mu = 1 / 4957.567
+        density = 2
+        lag = 1
+        scale_rate = 300
+        shutdown_delay = 300
+        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
+        # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
+        results['param'] = k
+        results['param_name'] = param_name
+        write_bp_timescale_raw_to_file('ma', results)
+        print_simple_results(results)
         #print_all_results(results)
 
 
@@ -280,6 +470,116 @@ def exponential_moving_average_policy_shutdown_delay_analysis():
         #print_all_results(results)
 
 
+def exponential_moving_average_policy_segmented_busiest():
+    param_name = 'alpha'
+    #print_results_header(param_name)
+    for alpha in ['0.16']:
+        scheduled = ErlangDataPolicyDataFileUserSim()
+        pred_user_count_file_path = 'data/day_cluster/busiest/ema_arrivals/arrivals_alpha_%s.txt' % alpha
+        users_data_file_path = 'data/day_cluster/2008_busiest_arrivals.txt'
+        worst_bp = 0.01
+        mu = 1 / 4957.567
+        density = 2
+        lag = 1
+        scale_rate = 300
+        shutdown_delay = 300
+        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
+        # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
+        results['param'] = alpha
+        results['param_name'] = param_name
+        write_bp_timescale_raw_to_file('ema', results)
+        print_simple_results(results)
+        #print_all_results(results)
+
+
+def exponential_moving_average_policy_segmented_slowest():
+    param_name = 'alpha'
+    #print_results_header(param_name)
+    for alpha in ['0.16']:
+        scheduled = ErlangDataPolicyDataFileUserSim()
+        pred_user_count_file_path = 'data/day_cluster/slowest/ema_arrivals/arrivals_alpha_%s.txt' % alpha
+        users_data_file_path = 'data/day_cluster/2008_slowest_arrivals.txt'
+        worst_bp = 0.01
+        mu = 1 / 4957.567
+        density = 2
+        lag = 1
+        scale_rate = 300
+        shutdown_delay = 300
+        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
+        # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
+        results['param'] = alpha
+        results['param_name'] = param_name
+        write_bp_timescale_raw_to_file('ema', results)
+        print_simple_results(results)
+        #print_all_results(results)
+
+
+def exponential_moving_average_policy_segmented_mon_fri_semester():
+    param_name = 'alpha'
+    #print_results_header(param_name)
+    for alpha in ['0.16']:
+        scheduled = ErlangDataPolicyDataFileUserSim()
+        pred_user_count_file_path = 'data/day_cluster/mon_fri_semester/ema_arrivals/arrivals_alpha_%s.txt' % alpha
+        users_data_file_path = 'data/day_cluster/2008_mon_fri_semester_arrivals.txt'
+        worst_bp = 0.01
+        mu = 1 / 4957.567
+        density = 2
+        lag = 1
+        scale_rate = 300
+        shutdown_delay = 300
+        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
+        # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
+        results['param'] = alpha
+        results['param_name'] = param_name
+        write_bp_timescale_raw_to_file('ema', results)
+        print_simple_results(results)
+        #print_all_results(results)
+
+
+def exponential_moving_average_policy_segmented_winter_spring_break():
+    param_name = 'alpha'
+    #print_results_header(param_name)
+    for alpha in ['0.16']:
+        scheduled = ErlangDataPolicyDataFileUserSim()
+        pred_user_count_file_path = 'data/day_cluster/winter_spring_break/ema_arrivals/arrivals_alpha_%s.txt' % alpha
+        users_data_file_path = 'data/day_cluster/2008_winter_spring_break_arrivals.txt'
+        worst_bp = 0.01
+        mu = 1 / 4957.567
+        density = 2
+        lag = 1
+        scale_rate = 300
+        shutdown_delay = 300
+        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
+        # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
+        results['param'] = alpha
+        results['param_name'] = param_name
+        write_bp_timescale_raw_to_file('ema', results)
+        print_simple_results(results)
+        #print_all_results(results)
+
+
+def exponential_moving_average_policy_not_segmented():
+    param_name = 'alpha'
+    #print_results_header(param_name)
+    for alpha in ['0.16']:
+        scheduled = ErlangDataPolicyDataFileUserSim()
+        pred_user_count_file_path = 'data/ema_arrivals/arrivals_alpha_%s.txt' % alpha
+        users_data_file_path = 'data/2008_year_arrivals.txt'
+        worst_bp = 0.01
+        mu = 1 / 4957.567
+        density = 2
+        lag = 1
+        scale_rate = 300
+        shutdown_delay = 300
+        results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
+        # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
+        results['param'] = alpha
+        results['param_name'] = param_name
+        write_bp_timescale_raw_to_file('ema', results)
+        print_simple_results(results)
+        #print_all_results(results)
+
+
 def autoregressive():
     scheduled = ErlangDataPolicyDataFileUserSim()
     pred_user_count_file_path = 'data/auto_regressive/yearlong_autoregressive_five_minute_counts.txt'
@@ -358,6 +658,91 @@ def autoregressive_policy_shutdown_delay_analysis():
         results['param_name'] = param_name
         print_simple_results(results, timescale='weekly_99_percentile')
         #print_all_results(results)
+
+
+def autoregressive_policy_segmented_busiest():
+    scheduled = ErlangDataPolicyDataFileUserSim()
+    pred_user_count_file_path = 'data/day_cluster/busiest/autoregressive_five_min_counts.txt'
+    users_data_file_path = 'data/day_cluster/2008_busiest_arrivals.txt'
+    worst_bp = 0.01
+    mu = 1 / 4957.567
+    density = 2
+    lag = 1
+    scale_rate = 300
+    shutdown_delay = 300
+    results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
+    # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
+    results['param'] = 'AR(2)'
+    print_simple_results(results)
+    #print_all_results(results)
+
+
+def autoregressive_policy_segmented_slowest():
+    scheduled = ErlangDataPolicyDataFileUserSim()
+    pred_user_count_file_path = 'data/day_cluster/slowest/autoregressive_five_min_counts.txt'
+    users_data_file_path = 'data/day_cluster/2008_slowest_arrivals.txt'
+    worst_bp = 0.01
+    mu = 1 / 4957.567
+    density = 2
+    lag = 1
+    scale_rate = 300
+    shutdown_delay = 300
+    results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
+    # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
+    results['param'] = 'AR(2)'
+    print_simple_results(results)
+    #print_all_results(results)
+
+
+def autoregressive_policy_segmented_mon_fri_semester():
+    scheduled = ErlangDataPolicyDataFileUserSim()
+    pred_user_count_file_path = 'data/day_cluster/mon_fri_semester/autoregressive_five_min_counts.txt'
+    users_data_file_path = 'data/day_cluster/2008_mon_fri_semester_arrivals.txt'
+    worst_bp = 0.01
+    mu = 1 / 4957.567
+    density = 2
+    lag = 1
+    scale_rate = 300
+    shutdown_delay = 300
+    results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
+    # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
+    results['param'] = 'AR(2)'
+    print_simple_results(results)
+    #print_all_results(results)
+
+
+def autoregressive_policy_segmented_winter_spring_break():
+    scheduled = ErlangDataPolicyDataFileUserSim()
+    pred_user_count_file_path = 'data/day_cluster/winter_spring_break/autoregressive_five_min_counts.txt'
+    users_data_file_path = 'data/day_cluster/2008_winter_spring_break_arrivals.txt'
+    worst_bp = 0.01
+    mu = 1 / 4957.567
+    density = 2
+    lag = 1
+    scale_rate = 300
+    shutdown_delay = 300
+    results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
+    # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
+    results['param'] = 'AR(2)'
+    print_simple_results(results)
+    #print_all_results(results)
+
+
+def autoregressive_policy_not_segmented():
+    scheduled = ErlangDataPolicyDataFileUserSim()
+    pred_user_count_file_path = 'data/auto_regressive/yearlong_autoregressive_five_minute_counts.txt'
+    users_data_file_path = 'data/2008_year_arrivals.txt'
+    worst_bp = 0.01
+    mu = 1 / 4957.567
+    density = 2
+    lag = 1
+    scale_rate = 300
+    shutdown_delay = 300
+    results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, three_hundred_second_startup_delay, shutdown_delay)
+    # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
+    results['param'] = 'AR(2)'
+    print_simple_results(results)
+    #print_all_results(results)
 
 
 def mixed_autoregressive():
@@ -449,20 +834,44 @@ if __name__ == "__main__":
     #fixed_policy_user_arrivals()
     #fixed_policy_density_analysis()
 
+    #fixed_policy_segmented_busiest()
+    #fixed_policy_segmented_slowest()
+    #fixed_policy_segmented_mon_fri_semester()
+    #fixed_policy_segmented_winter_spring_break()
+    #fixed_policy_not_segmented()
+
     #moving_average()
     #moving_average_policy_density_analysis()
     #moving_average_policy_startup_delay_analysis()
     #moving_average_policy_shutdown_delay_analysis()
+
+    #moving_average_policy_segmented_busiest()
+    #moving_average_policy_segmented_slowest()
+    #moving_average_policy_segmented_mon_fri_semester()
+    #moving_average_policy_segmented_winter_spring_break()
+    #moving_average_policy_not_segmented()
 
     #exponential_moving_average()
     #exponential_moving_average_policy_density_analysis()
     #exponential_moving_average_policy_startup_delay_analysis()
     #exponential_moving_average_policy_shutdown_delay_analysis()
 
+    #exponential_moving_average_policy_segmented_busiest()
+    #exponential_moving_average_policy_segmented_slowest()
+    #exponential_moving_average_policy_segmented_mon_fri_semester()
+    #exponential_moving_average_policy_segmented_winter_spring_break()
+    #exponential_moving_average_policy_not_segmented()
+
     #autoregressive()
     #autoregressive_density()
     #autoregressive_policy_startup_delay_analysis()
     #autoregressive_policy_shutdown_delay_analysis()
+
+    #autoregressive_policy_segmented_busiest()
+    #autoregressive_policy_segmented_slowest()
+    #autoregressive_policy_segmented_mon_fri_semester()
+    #autoregressive_policy_segmented_winter_spring_break()
+    #autoregressive_policy_not_segmented()
 
     #mixed_autoregressive()
     #mixed_autoregressive_density()

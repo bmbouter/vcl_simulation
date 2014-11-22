@@ -107,6 +107,81 @@ def reserve_policy_data_file_user_sim_shutdown_delay_analysis():
         #print_all_results(results)
 
 
+def reserve_policy_segmented_busiest():
+    param_name = 'R'
+    #print_results_header(param_name)
+    for R in [12]:
+        reserve = ReservePolicyDataFileUserSim()
+        users_data_file_path = 'data/day_cluster/2008_busiest_arrivals.txt'
+        results = reserve.run(R, users_data_file_path, 2, 300, three_hundred_second_startup_delay, 300)
+        #reserve.run(reserved, users_data_file_path, density, scale_rate, startup_delay_func, shutdown_delay)
+        results['param'] = R
+        results['param_name'] = param_name
+        write_bp_timescale_raw_to_file('reserve', results)
+        print_simple_results(results)
+        #print_all_results(results)
+
+
+def reserve_policy_segmented_slowest():
+    param_name = 'R'
+    #print_results_header(param_name)
+    for R in [12]:
+        reserve = ReservePolicyDataFileUserSim()
+        users_data_file_path = 'data/day_cluster/2008_slowest_arrivals.txt'
+        results = reserve.run(R, users_data_file_path, 2, 300, three_hundred_second_startup_delay, 300)
+        #reserve.run(reserved, users_data_file_path, density, scale_rate, startup_delay_func, shutdown_delay)
+        results['param'] = R
+        results['param_name'] = param_name
+        write_bp_timescale_raw_to_file('reserve', results)
+        print_simple_results(results)
+        #print_all_results(results)
+
+
+def reserve_policy_segmented_mon_fri_semester():
+    param_name = 'R'
+    #print_results_header(param_name)
+    for R in [12]:
+        reserve = ReservePolicyDataFileUserSim()
+        users_data_file_path = 'data/day_cluster/2008_mon_fri_semester_arrivals.txt'
+        results = reserve.run(R, users_data_file_path, 2, 300, three_hundred_second_startup_delay, 300)
+        #reserve.run(reserved, users_data_file_path, density, scale_rate, startup_delay_func, shutdown_delay)
+        results['param'] = R
+        results['param_name'] = param_name
+        write_bp_timescale_raw_to_file('reserve', results)
+        print_simple_results(results)
+        #print_all_results(results)
+
+
+def reserve_policy_segmented_winter_spring_break():
+    param_name = 'R'
+    #print_results_header(param_name)
+    for R in [12]:
+        reserve = ReservePolicyDataFileUserSim()
+        users_data_file_path = 'data/day_cluster/2008_winter_spring_break_arrivals.txt'
+        results = reserve.run(R, users_data_file_path, 2, 300, three_hundred_second_startup_delay, 300)
+        #reserve.run(reserved, users_data_file_path, density, scale_rate, startup_delay_func, shutdown_delay)
+        results['param'] = R
+        results['param_name'] = param_name
+        write_bp_timescale_raw_to_file('reserve', results)
+        print_simple_results(results)
+        #print_all_results(results)
+
+
+def reserve_policy_not_segmented():
+    param_name = 'R'
+    #print_results_header(param_name)
+    for R in [12]:
+        reserve = ReservePolicyDataFileUserSim()
+        users_data_file_path = 'data/2008_year_arrivals.txt'
+        results = reserve.run(R, users_data_file_path, 2, 300, three_hundred_second_startup_delay, 300)
+        #reserve.run(reserved, users_data_file_path, density, scale_rate, startup_delay_func, shutdown_delay)
+        results['param'] = R
+        results['param_name'] = param_name
+        write_bp_timescale_raw_to_file('reserve', results)
+        print_simple_results(results)
+        #print_all_results(results)
+
+
 def time_vary_reserve_policy_data_file_user_sim_table():
     param_name = 'percentile,window_size'
     print_results_header(param_name)
@@ -146,11 +221,18 @@ if __name__ == "__main__":
     if not os.path.isfile('reserve_capacity.py'):
         print 'Please run in the same directory as reserve_capacity.py'
         exit()
+
     #reserve_policy_data_file_user_sim()
     #reserve_policy_data_file_user_sim_table()
     #reserve_policy_data_file_user_sim_density_analysis()
     #reserve_policy_data_file_user_sim_startup_delay_analysis()
     #reserve_policy_data_file_user_sim_shutdown_delay_analysis()
+
+    #reserve_policy_segmented_busiest()
+    #reserve_policy_segmented_slowest()
+    #reserve_policy_segmented_mon_fri_semester()
+    #reserve_policy_segmented_winter_spring_break()
+    #reserve_policy_not_segmented()
 
     #time_vary_reserve_policy_data_file_user_sim_table()
     #time_vary_reserve_policy_data_file_user_sim_density_analysis()
