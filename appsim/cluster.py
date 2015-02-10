@@ -19,6 +19,9 @@ class Cluster(object):
                applications per VM (default 1)
     initial_capacity -- integer representing the number of virtual
                machines in the active state at simulation time 0
+    loss_assumption -- If True, a customer who is blocked leaves the system
+                       immediately. Otherwise customers stay around in a
+                       FCFS queue until they can be served.
 
     Instance variables:
     self.booting -- a list of Resource objects in the 'booting' state
@@ -30,14 +33,18 @@ class Cluster(object):
 
     total_prov = 0
     total_deleted = 0
-    def __init__(self, sim, density=1, initial_capacity=0):
+
+    def __init__(self, sim, density=1, initial_capacity=0, loss_assumption=False):
+        self.cluster_resource = Resource(capacity=0, name='cluster_resource', sim=sim, monitored=True)
         self.booting = []
         self.active = []
         self.shutting_down = []
         self.density = density
         self.sim = sim
+        self.loss_assumption = loss_assumption
         for server in range(0,initial_capacity):
             self.active.append(self.create_VM())
+            self.add_server_to_cluster_resource_size()
             Cluster.total_prov += 1
 
     def __str__(self):
@@ -48,6 +55,39 @@ class Cluster(object):
         """
         return 'Cluster(booting=%d, active=%d, shutting_down=%d)' % \
              (len(self.booting), len(self.active), len(self.shutting_down))
+
+    def check_cluster_resource_size(self):
+        """
+        Check that cluster_resource is exactly the expected size
+        """
+        expected_capacity = sum([vm.capacity for vm in self.active])
+        expected_n = sum([vm.n for vm in self.active])
+        if self.cluster_resource.n != expected_n:
+            raise RuntimeError("cluster_resource.n != 0")
+        if self.cluster_resource.capacity != expected_capacity:
+            raise RuntimeError("cluster_resource.capacity != 0")
+
+    def add_server_to_cluster_resource_size(self):
+        """
+        Adds self.density size to capacity and n of self.cluster_resource
+        """
+        if self.loss_assumption:
+            # No need to maintain this data if the loss_assumption is True
+            return
+        self.cluster_resource.capacity = self.cluster_resource.capacity + self.density
+        self.cluster_resource.n = self.cluster_resource.n + self.density
+        self.check_cluster_resource_size()
+
+    def remove_server_to_cluster_resource_size(self):
+        """
+        Removes self.density size from capacity and n of self.cluster_resource
+        """
+        if self.loss_assumption:
+            # No need to maintain this data if the loss_assumption is True
+            return
+        self.cluster_resource.capacity = self.cluster_resource.capacity - self.density
+        self.cluster_resource.n = self.cluster_resource.n - self.density
+        self.check_cluster_resource_size()
 
     def create_VM(self):
         """Create a Resource of size self.density and return it

@@ -34,8 +34,8 @@ class Scale(Process):
         Process.__init__(self, name='Scaler Function', sim=self.sim)
 
     def execute(self):
-        """Execute the scaler function.  This handles all actions common to
-        all scalers.  This in turn calls out to scale_logic which provides
+        """Execute the scaler function. This handles all actions common to
+        all scalers. This in turn calls out to scale_logic which provides
         the logic through subclassing.
 
         """
@@ -53,13 +53,14 @@ class Scale(Process):
                     not_to_be_shut_off_list.append(new_vm)
                     #raw_input('removing server %d from shutting down state and putting back in ACTIVE' % new_vm.rank)
                     self.sim.cluster.active.append(new_vm)
+                    self.sim.cluster.add_server_to_cluster_resource_size()
                 else:
                     new_vm = self.sim.cluster.create_VM()
                     new_vm.ready_time = self.sim.now() + self.startup_delay_func()
                     new_vm.start_time = self.sim.now()
                     self.sim.cluster.booting.append(new_vm)
                     Cluster.total_prov += 1
-                    #raw_input('server %s booting.  it will be READY AT %s' % (new_vm.rank, new_vm.ready_time))
+                    #raw_input('server %s booting. It will be READY AT %s' % (new_vm.rank, new_vm.ready_time))
 
             ready_to_be_active = [ elem for elem in self.sim.cluster.booting if self.sim.now() >= elem.ready_time ]
 
@@ -67,6 +68,7 @@ class Scale(Process):
                 #raw_input('Server %d is now active' % s.rank)
                 self.sim.cluster.booting.remove(s)
                 self.sim.cluster.active.append(s)
+                self.sim.cluster.add_server_to_cluster_resource_size()
                 not_to_be_shut_off_list.append(s)
 
             # Look for VMs to shut off
@@ -75,8 +77,9 @@ class Scale(Process):
                     stopped_count = stopped_count + 1
                     servers_to_stop = servers_to_stop - 1
                     server.power_off_time = self.sim.now() + self.shutdown_delay
-                    #raw_input('Server %d is empty, shutting it down.  It will be powered off at %d' % (server.rank, server.power_off_time))
+                    #raw_input('Server %d is empty, shutting it down. It will be powered off at %d' % (server.rank, server.power_off_time))
                     self.sim.cluster.active.remove(server)
+                    self.sim.cluster.remove_server_to_cluster_resource_size()
                     self.sim.cluster.shutting_down.append(server)
 
             self.scaling_complete(stopped_count)
@@ -104,14 +107,14 @@ class Scale(Process):
 
     def scaling_complete(self, stopped_count):
         """A callback function which is called after scaling is complete with
-        the number of servers stopped.  If a scaler policy does not override
+        the number of servers stopped. If a scaler policy does not override
         this funciton it does nothing.
 
         """
         pass
 
     def scaler_logic(self):
-        """This is where scaler_logic not common to all scalers is stored.  This
+        """This is where scaler_logic not common to all scalers is stored. This
         is designed to be implemented by any subclasses, and raises a
         NotImplementedException here.
 

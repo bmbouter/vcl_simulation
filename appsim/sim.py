@@ -1,24 +1,25 @@
 from random import seed
 
+import numpy as np
 from SimPy.Simulation import *
 
 from cluster import Cluster
 from appsim.scaler.reserve_policy import ReservePolicy, TimeVaryReservePolicy
 from appsim.scaler.fixed_size_policy import FixedSizePolicy
 from appsim.scaler.data_file_policy import GenericDataFileScaler
-from appsim.scaler.erlang_b_formula_policy import ErlangBFormulaDataPolicy
-from tools import MonitorStatistics, UtilizationStatisticsMixin, SECONDS_IN_A_YEAR
+from appsim.scaler.erlang_policy import ErlangBFormulaDataPolicy
+from tools import MonitorStatistics, UtilizationStatisticsMixin, \
+    SECONDS_IN_A_YEAR, WaitTimeStatistics
 from user_generators import PoissonGenerator, DataFileGenerator
 from user_generators import NoMoreUsersException
-from scaler.reserve_policy import ReservePolicy
 
 
 class MMCmodel(Simulation, UtilizationStatisticsMixin):
     """A highly customizable simpy M/M/C Erlang-loss system
 
-    MMCmodel is a simulation which brings together different simulation 
+    MMCmodel is a simulation which brings together different simulation
     components to simulate an M/M/C Erlang-loss system where customers
-    are considered blocked and walk away if they are refused service 
+    are considered blocked and walk away if they are refused service
     upon arrival. After instantiation the following member variables
     must be assigned to instantiated classes of the following type:
 
@@ -35,7 +36,7 @@ class MMCmodel(Simulation, UtilizationStatisticsMixin):
     The UtilizationStatisticsMixin adds methods which compute Utilization
     statistics on different timescales.
 
-    """ 
+    """
 
     def __init__(self, rand_seed=333555777):
         """Initializer for an MMCmodel
@@ -48,20 +49,26 @@ class MMCmodel(Simulation, UtilizationStatisticsMixin):
         self.initialize()
         ### Simulation Monitors
         ### Scale Monitors
-        self.mClusterActive = Monitor(sim=self)  # monitor cluster.active with each scale event
-        self.mClusterBooting = Monitor(sim=self)  # monitor cluster.booting with each scale event
-        self.mClusterShuttingDown = Monitor(sim=self)  # monitor cluster.shutting_down with each scale event
-        self.mClusterOccupancy = Monitor(sim=self)  # monitor the number of utilized seats with each scale event
+        # scale monitors are recorded with each scale event
+        self.mClusterActive = Monitor(sim=self)  # monitor cluster.active
+        self.mClusterBooting = Monitor(sim=self)  # monitor cluster.booting
+        self.mClusterShuttingDown = Monitor(sim=self)  # cluster.shutting_down
+        self.mClusterOccupancy = Monitor(sim=self)  # utilized seats
         ### Customer Monitors
-        self.mBlocked = Monitor(sim=self)  # monitor observing if a customer is blocked or not
-        self.mNumServers = Monitor(sim=self)  # monitor observing cluster num_servers active+booting+shutting
-        self.mServerProvisionLength = Monitor(sim=self)  # monitor observing the length a server was online when it is deprovisioned
-        self.mAcceptServiceTimes = Monitor(sim=self)  # monitor for the service times of customers who were accepted
-        self.mLostServiceTimes = Monitor(sim=self)  # monitor for the service times for customers who are were blocked
+        self.mBlocked = Monitor(sim=self)  # ifcustomer is blocked or not
+        self.mNumServers = Monitor(sim=self)  # cluster active+booting+shutting
+        self.mServerProvisionLength = Monitor(sim=self)  # online time
+
+        # service times of customers who were accepted
+        self.mAcceptServiceTimes = Monitor(sim=self)
+
+        # monitor for the service times for customers who are were blocked
+        self.mLostServiceTimes = Monitor(sim=self)
 
     def finalize_simulation(self):
         if self.now() >= SECONDS_IN_A_YEAR:
-            raise Exception('Finalizing simulation after %s seconds is incorrect!' % SECONDS_IN_A_YEAR)
+            raise Exception(
+                'Finalizing simulation after %s seconds is incorrect!' % SECONDS_IN_A_YEAR)
         self._adjust_mAcceptServiceTimes()
         self._adjust_mLostServiceTimes()
         self._observe_running_servers()
@@ -72,18 +79,20 @@ class MMCmodel(Simulation, UtilizationStatisticsMixin):
 
         Server provision start time and its deployed length is recorded when a server is deleted.
         It is recorded this way because policies may dynamically decide to delete a VM without known
-        when those conditions will occur.  Thus it is easier to do upon deletion.
+        when those conditions will occur. Thus it is easier to do upon deletion.
 
         When a simulation completed, any servers that are in the active, booting, or shutting_down
-        states need to have their start time and service times observed.  This method makes those
-        observations into the appropriate monitor, mServerProvisionLength.  It records the start
+        states need to have their start time and service times observed. This method makes those
+        observations into the appropriate monitor, mServerProvisionLength. It records the start
         time and provisioned time, assuming the server is deleted at time self.now().
-        
         """
         c = self.cluster
         for server in c.active + c.booting + c.shutting_down:
             server_deployed_time = self.now() - server.start_time
-            self.mServerProvisionLength.observe(server_deployed_time, t=server.start_time)  # monitor the servers provision, deprovision time
+
+            # monitor the servers provision, deprovision time
+            self.mServerProvisionLength.observe(server_deployed_time,
+                                                t=server.start_time)
         c.active = c.booting = c.shutting_down = []
 
     def _adjust_mAcceptServiceTimes(self):
@@ -92,11 +101,10 @@ class MMCmodel(Simulation, UtilizationStatisticsMixin):
         never happened.
 
         The service time of accepted customers is recorded in the mAcceptServiceTimes monitor at the
-        time a customer is accepted.  These could potentially go further into the future than the
-        simulation actually does.  This method updates the duration values of any
-        mAcceptServiceTimes observations where start_time + duration > self.now().  The start time
+        time a customer is accepted. These could potentially go further into the future than the
+        simulation actually does. This method updates the duration values of any
+        mAcceptServiceTimes observations where start_time + duration > self.now(). The start time
         requires no update, but the duration is set to self.now() - start_time.
-        
         """
         current_sim_time = self.now()
         for i, item in enumerate(self.mAcceptServiceTimes):
@@ -110,11 +118,10 @@ class MMCmodel(Simulation, UtilizationStatisticsMixin):
         never happened.
 
         The service time of blocked customers is recorded in the mLostServiceTimes monitor at the
-        time a customer is blocked.  These could potentially go further into the future than the
-        simulation actually does.  This method updates the duration values of any mLostServiceTimes
-        observations where start_time + duration > self.now().  The start time requires no update,
+        time a customer is blocked. These could potentially go further into the future than the
+        simulation actually does. This method updates the duration values of any mLostServiceTimes
+        observations where start_time + duration > self.now(). The start time requires no update,
         but the duration is set to self.now() - start_time.
-        
         """
         current_sim_time = self.now()
         for i, item in enumerate(self.mLostServiceTimes):
@@ -124,8 +131,8 @@ class MMCmodel(Simulation, UtilizationStatisticsMixin):
 
     def run(self):
         """Runs an MMCmodel simulation"""
-        self.activate(self.scaler,self.scaler.execute())
-        self.activate(self.user_generator,self.user_generator.execute())
+        self.activate(self.scaler, self.scaler.execute())
+        self.activate(self.user_generator, self.user_generator.execute())
         try:
             self.simulate(until=10**30)
         except NoMoreUsersException:
@@ -141,6 +148,7 @@ class MMCmodel(Simulation, UtilizationStatisticsMixin):
         bp_by_week = MonitorStatistics(self.mBlocked).bp_by_week
         bp_by_month = MonitorStatistics(self.mBlocked).bp_by_month
         bp_by_year = MonitorStatistics(self.mBlocked).bp_by_year
+
         # compute utilization
         mean_utilization = self.get_mean_utilization()
         # compute utilization timescales
@@ -149,6 +157,17 @@ class MMCmodel(Simulation, UtilizationStatisticsMixin):
         util_by_week = self.util_by_week
         util_by_month = self.util_by_month
         util_by_year = self.util_by_year
+
+        # Add in waiting time info
+        wts = WaitTimeStatistics(self.cluster.cluster_resource.waitMon)
+        wait_times_by_hour = wts.wait_times_by_hour
+        wait_times_by_day = wts.wait_times_by_day
+        wait_times_by_week = wts.wait_times_by_week
+        wait_times_by_month = wts.wait_times_by_month
+        wait_times_by_year = wts.wait_times_by_year
+        (mean_wait_time, mean_wait_time_delta) = wts.batchmean
+        wait_times_year_99_percentile = np.percentile([c[1] for c in self.cluster.cluster_resource.waitMon], 99)
+
         # add in bp percent error and bp raw timescales
         bp_percent_error = 100 * (bp_delta / bp if bp else 0)
         bp_timescale_raw = {'hour': bp_by_hour['bp_raw'],
@@ -156,21 +175,29 @@ class MMCmodel(Simulation, UtilizationStatisticsMixin):
                             'week': bp_by_week['bp_raw'],
                             'month': bp_by_month['bp_raw'],
                             'year': bp_by_year['bp_raw']}
-        return_dict.update({'bp_batch_mean': bp, 
-                            'bp_batch_mean_delta': bp_delta, 
-                            'bp_by_hour': bp_by_hour, 
-                            'bp_by_day': bp_by_day, 
-                            'bp_by_week': bp_by_week, 
-                            'bp_by_month': bp_by_month, 
-                            'bp_by_year': bp_by_year, 
+        return_dict.update({'bp_batch_mean': bp,
+                            'bp_batch_mean_delta': bp_delta,
+                            'bp_by_hour': bp_by_hour,
+                            'bp_by_day': bp_by_day,
+                            'bp_by_week': bp_by_week,
+                            'bp_by_month': bp_by_month,
+                            'bp_by_year': bp_by_year,
                             'util_by_hour': util_by_hour,
                             'util_by_day': util_by_day,
                             'util_by_week': util_by_week,
                             'util_by_month': util_by_month,
                             'util_by_year': util_by_year,
+                            'wait_times_by_hour': wait_times_by_hour,
+                            'wait_times_by_day': wait_times_by_day,
+                            'wait_times_by_week': wait_times_by_week,
+                            'wait_times_by_month': wait_times_by_month,
+                            'wait_times_by_year': wait_times_by_year,
+                            'wait_times_batch_mean': mean_wait_time,
+                            'wait_times_batch_mean_delta': mean_wait_time_delta,
+                            'wait_times_year_99_percentile': wait_times_year_99_percentile,
                             'num_servers': num_servers,
                             'ns_delta': ns_delta,
-                            'bp_batch_mean_percent_error': bp_percent_error, 
+                            'bp_batch_mean_percent_error': bp_percent_error,
                             'mean_utilization': mean_utilization,
                             'bp_timescale_raw': bp_timescale_raw})
         return return_dict
@@ -255,7 +282,7 @@ class ReservePolicyDataFileUserSim(MMCmodel):
         reserved -- scale the cluster such that this value is less than the
             greatest number of available application seats
         users_data_file_path -- a file path to the user data file with two
-            comma separated columns.  interarrival time, service time
+            comma separated columns. interarrival time, service time
         density -- the number of application seats per virtual machine
         scale_rate -- The interarrival time between scale events in seconds
         startup_delay_func -- A callable that returns the time a server spends
@@ -284,15 +311,15 @@ class TimeVaryReservePolicyDataFileUserSim(MMCmodel):
 
         Parameters:
         window_size -- If an integer, it is the number of previous five-minute
-            counts to consider to build a percentile from.  If set to None, the
+            counts to consider to build a percentile from. If set to None, the
             all previous values observed are seen.
         arrival_percentile -- The percentile of observed five-minute counts, to
-            use as the value of R.  R is used as the number of seats at the end
+            use as the value of R. R is used as the number of seats at the end
             of the scale operation.
         five_minute_counts_file -- The path to a file containing all five-minute
             arrival counts.
         users_data_file_path -- a file path to the user data file with two
-            comma separated columns.  interarrival time, service time
+            comma separated columns. interarrival time, service time
         density -- the number of application seats per virtual machine
         scale_rate -- The interarrival time between scale events in seconds
         startup_delay_func -- A callable that returns the time a server spends
@@ -323,9 +350,9 @@ class DataFilePolicyDataFileUserSim(MMCmodel):
 
         Parameters:
         prov_data_file_path -- a file path to the provisioning data file with
-            two comma separated columns.  provision time, deprovision time
+            two comma separated columns. provision time, deprovision time
         users_data_file_path -- a file path to the user data file with two
-            comma separated columns.  interarrival time, service time
+            comma separated columns. interarrival time, service time
         density -- the number of application seats per virtual machine
         startup_delay_func -- the time a server spends in the booting state
         shutdown_delay -- the time a server spends in the shutting_down state
@@ -360,7 +387,7 @@ class ErlangDataPolicyDataFileUserSim(MMCmodel):
             which defines the service time process. Used for prediction
             purposes.
         users_data_file_path -- a file path to the user data file with two
-            comma separated columns.  interarrival time, service time
+            comma separated columns. interarrival time, service time
         lag -- an integer number of periods to lag values in
             pred_user_count_file_path by. Effectively, this introduces lag
             number of zeros at the beginning of pred_user_count_file

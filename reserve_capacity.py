@@ -2,7 +2,8 @@ import os
 
 from appsim.sim import ReservePolicyDataFileUserSim, TimeVaryReservePolicyDataFileUserSim
 from common import fixed_startup_delay, normal_distribution_startup_delay
-from output_utils import print_results_header, print_all_results, print_simple_results
+from output_utils import print_results_header, print_all_results, print_simple_results, print_wait_time
+
 
 reserved = 2
 scale_rate = 1
@@ -11,6 +12,7 @@ mu = 1
 startup_delay = 0
 shutdown_delay = 0
 num_customers = 50000
+
 
 three_hundred_second_startup_delay = fixed_startup_delay(300)
 
@@ -48,8 +50,8 @@ def reserve_policy_data_file_user_sim_table():
         results['param'] = R
         results['param_name'] = param_name
         write_bp_timescale_raw_to_file('reserve', results)
-        #print_simple_results(results)
-        print_all_results(results)
+        print_simple_results(results)
+        #print_all_results(results)
 
 
 def reserve_policy_data_file_user_sim_density_analysis():

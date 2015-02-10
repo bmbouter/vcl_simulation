@@ -7,6 +7,7 @@ SECONDS_IN_A_WEEK = 606462  # (31536000 s/year / 52 weeks/year) rounded up
 SECONDS_IN_A_MONTH = 2628000  # 31536000 s/year / 12 months/year
 SECONDS_IN_A_YEAR = 31536000  # 86400 s/day * 365 s/year
 
+
 class MonitorStatistics(object):
     """Calculates statistics from a SimPy monitor"""
 
@@ -23,10 +24,10 @@ class MonitorStatistics(object):
         """Groups blocking probability observations by time.
 
         bp_by_time computes the blocking probability during a time interval,
-        and returns a list of blocking probabilities for all simulated time.  A
-        list of floats should be expected. Time intervals during which no
-        arrivals occured are considered to have a blocking probability of 0 and
-        are included in the result.  No confidence interval is computed.
+        and returns a list of blocking probabilities for all simulated time.
+        A list of floats should be expected. Time intervals during which no
+        arrivals occurred are considered to have a blocking probability of 0
+        and are included in the result. No confidence interval is computed.
 
         """
         time_interval = float(time_interval)
@@ -70,7 +71,7 @@ class MonitorStatistics(object):
     def bp_by_hour(self):
         """Returns blocking probability statistics by hour
 
-        See DocBlock of bp_by_time for full time grouping behavior.  See
+        See DocBlock of bp_by_time for full time grouping behavior. See
         DocBlock of bp_statistics for expected keys in the dict returned.
 
         """
@@ -81,7 +82,7 @@ class MonitorStatistics(object):
     def bp_by_day(self):
         """Returns blocking probability statistics by day
 
-        See DocBlock of bp_by_time for full time grouping behavior.  See
+        See DocBlock of bp_by_time for full time grouping behavior. See
         DocBlock of bp_statistics for expected keys in the dict returned.
 
         """
@@ -92,7 +93,7 @@ class MonitorStatistics(object):
     def bp_by_week(self):
         """Returns blocking probability statistics by week
 
-        See DocBlock of bp_by_time for full time grouping behavior.  See
+        See DocBlock of bp_by_time for full time grouping behavior. See
         DocBlock of bp_statistics for expected keys in the dict returned.
 
         """
@@ -103,7 +104,7 @@ class MonitorStatistics(object):
     def bp_by_month(self):
         """Returns blocking probability statistics by month
 
-        See DocBlock of bp_by_time for full time grouping behavior.  See
+        See DocBlock of bp_by_time for full time grouping behavior. See
         DocBlock of bp_statistics for expected keys in the dict returned.
 
         """
@@ -114,7 +115,7 @@ class MonitorStatistics(object):
     def bp_by_year(self):
         """Returns blocking probability statistics by year
 
-        See DocBlock of bp_by_time for full time grouping behavior.  See
+        See DocBlock of bp_by_time for full time grouping behavior. See
         DocBlock of bp_statistics for expected keys in the dict returned.
 
         """
@@ -125,15 +126,15 @@ class MonitorStatistics(object):
     def batchmean(self):
         """Returns a dict containing keys 'average' and 'delta'
 
-        batchmean computes the average using a batch means method and finds 
-        the the 95% confidence interval.  The confidence interval as the 
+        batchmean computes the average using a batch means method and finds
+        the the 95% confidence interval. The confidence interval as the
         distance between the average and the edge of the confidence interval.
 
         """
         size = (len(self.monitor) / 31)
         lower = 0
         estimates = []
-        for batch in range(0,31):
+        for batch in range(0, 31):
             upper = lower + size
             slice = self.monitor[lower:upper]
             lower = upper
@@ -145,6 +146,152 @@ class MonitorStatistics(object):
         s_squared = sum_xi_minus_xbar / len(xi_minus_xbar)
         delta = (math.sqrt(s_squared) / math.sqrt(30)) * 1.96
         return (average, delta)
+
+
+class WaitTimeStatistics(object):
+    """Calculates statistics from a SimPy monitor"""
+
+    def __init__(self, monitor):
+        """Creates a WaitTimeStatistics object
+
+        Parameters:
+        monitor -- the monitor to have its statistics summarized
+
+        """
+        self.monitor = monitor
+
+    def wait_times_by_time(self, time_interval):
+        """Groups wait time observations by time.
+
+        Averages the wait time statistics on a time interval,and returns a
+        list of wait time averages per time period for all simulated time. A
+        list of floats should be expected. Time intervals during which no
+        arrivals occurred are considered to have a wait time of 0
+        and are included in the result. No confidence interval is computed.
+
+        """
+        time_interval = float(time_interval)
+        num_buckets = int(math.ceil(SECONDS_IN_A_YEAR / time_interval))
+        bucket_observations = [[] for i in range(num_buckets)]
+        for observation in self.monitor:
+            observation_time = observation[0]
+            index = int(math.floor(observation_time / time_interval))
+            bucket_observations[index].append(observation)
+
+        wait_times = []
+        for bucket in bucket_observations:
+            if bucket == []:
+                wait_times.append(0)
+            else:
+                wait_times_sum = sum([observation[1] for observation in bucket])
+                wait_times_bucket = wait_times_sum / float(len(bucket))
+                wait_times.append(wait_times_bucket)
+
+        return wait_times
+
+    def wait_times_statistics(self, wait_times):
+        """Returns a dict with the 50th, 95th, 99th percentiles and the mean.
+
+        The dict has the following keys:
+        'wait_times_50percentile' -- the 50th percentile of blocking probability
+        'wait_times_95percentile' -- the 95th percentile of blocking probability
+        'wait_times_99percentile' -- the 99th percentile of blocking probability
+        'wait_times_mean' -- the mean of blocking probability
+
+        """
+        toReturn = {}
+        toReturn['wait_times_50percentile'] = np.percentile(wait_times, 50)
+        toReturn['wait_times_95percentile'] = np.percentile(wait_times, 95)
+        toReturn['wait_times_99percentile'] = np.percentile(wait_times, 99)
+        toReturn['wait_times_mean'] = np.mean(wait_times)
+        toReturn['wait_times_raw'] = wait_times
+        return toReturn
+
+    @property
+    def wait_times_by_hour(self):
+        """Returns blocking probability statistics by hour
+
+        See DocBlock of wait_times_by_time for full time grouping behavior.
+        See DocBlock of wait_times_statistics for expected keys in the dict
+        returned.
+
+        """
+        wait_times = self.wait_times_by_time(SECONDS_IN_AN_HOUR)
+        return self.wait_times_statistics(wait_times)
+
+    @property
+    def wait_times_by_day(self):
+        """Returns blocking probability statistics by day
+
+        See DocBlock of wait_times_by_time for full time grouping behavior.
+        See DocBlock of wait_times_statistics for expected keys in the dict
+        returned.
+
+        """
+        wait_times = self.wait_times_by_time(SECONDS_IN_A_DAY)
+        return self.wait_times_statistics(wait_times)
+
+    @property
+    def wait_times_by_week(self):
+        """Returns blocking probability statistics by week
+
+        See DocBlock of wait_times_by_time for full time grouping behavior.
+        See DocBlock of wait_times_statistics for expected keys in the dict
+        returned.
+
+        """
+        wait_times = self.wait_times_by_time(SECONDS_IN_A_WEEK)
+        return self.wait_times_statistics(wait_times)
+
+    @property
+    def wait_times_by_month(self):
+        """Returns blocking probability statistics by month
+
+        See DocBlock of wait_times_by_time for full time grouping behavior.
+        See DocBlock of wait_times_statistics for expected keys in the dict
+        returned.
+
+        """
+        wait_times = self.wait_times_by_time(SECONDS_IN_A_MONTH)
+        return self.wait_times_statistics(wait_times)
+
+    @property
+    def wait_times_by_year(self):
+        """Returns blocking probability statistics by year
+
+        See DocBlock of wait_times_by_time for full time grouping behavior.
+        See DocBlock of wait_times_statistics for expected keys in the dict
+        returned.
+
+        """
+        wait_times = self.wait_times_by_time(SECONDS_IN_A_YEAR)
+        return self.wait_times_statistics(wait_times)
+
+    @property
+    def batchmean(self):
+        """Returns a dict containing keys 'average' and 'delta'
+
+        Computes the average using a batch means method and finds the the 95%
+        confidence interval. The confidence interval as the distance between
+        the average and the edge of the confidence interval.
+
+        """
+        size = (len(self.monitor) / 31)
+        lower = 0
+        estimates = []
+        for batch in range(0, 31):
+            upper = lower + size
+            slice = self.monitor[lower:upper]
+            lower = upper
+            bucket_average = float(sum([x[1] for x in slice])) / len(slice)
+            estimates.append(bucket_average)
+        average = sum(estimates[1:]) / len(estimates[1:])
+        xi_minus_xbar = [(x - average)*(x - average) for x in estimates[1:]]
+        sum_xi_minus_xbar = sum(xi_minus_xbar)
+        s_squared = sum_xi_minus_xbar / len(xi_minus_xbar)
+        delta = (math.sqrt(s_squared) / math.sqrt(30)) * 1.96
+        return (average, delta)
+
 
 class UtilizationStatisticsMixin(object):
     """Adds methods to sim.MMCmodel that compute utilization.
@@ -161,7 +308,7 @@ class UtilizationStatisticsMixin(object):
         """Computes utilization by time.
 
         Computes the utilization during the requested time interval, and
-        returns a list of utilization for all simulated time.  A list of floats
+        returns a list of utilization for all simulated time. A list of floats
         is expected.
 
         Generally utilization is computed for any time window as the cumulative
@@ -224,7 +371,9 @@ class UtilizationStatisticsMixin(object):
                 util.append(util_per_bucket)
             except ZeroDivisionError:
                 if bucket['user'] > bucket['seat']:
-                    raise Exception('In calculating utilization, a user should not have more seat time than there is server time in a period.')
+                    raise Exception(
+                        'In calculating utilization, a user should not have '
+                        'more seat time than there is server time in a period.')
         return util
 
     def util_statistics(self, util):
@@ -249,7 +398,7 @@ class UtilizationStatisticsMixin(object):
     def util_by_hour(self):
         """Returns utilization statistics by hour.
 
-        See DocBlock of util_by_time for full time grouping behavior.  See
+        See DocBlock of util_by_time for full time grouping behavior. See
         DocBlock of util_statistics for expected keys in the dict returned.
 
         """
@@ -260,7 +409,7 @@ class UtilizationStatisticsMixin(object):
     def util_by_day(self):
         """Returns utilization statistics by day.
 
-        See DocBlock of util_by_time for full time grouping behavior.  See
+        See DocBlock of util_by_time for full time grouping behavior. See
         DocBlock of util_statistics for expected keys in the dict returned.
 
         """
@@ -271,7 +420,7 @@ class UtilizationStatisticsMixin(object):
     def util_by_week(self):
         """Returns utilization statistics by week.
 
-        See DocBlock of util_by_time for full time grouping behavior.  See
+        See DocBlock of util_by_time for full time grouping behavior. See
         DocBlock of util_statistics for expected keys in the dict returned.
 
         """
@@ -282,7 +431,7 @@ class UtilizationStatisticsMixin(object):
     def util_by_month(self):
         """Returns utilization statistics by month.
 
-        See DocBlock of util_by_time for full time grouping behavior.  See
+        See DocBlock of util_by_time for full time grouping behavior. See
         DocBlock of util_statistics for expected keys in the dict returned.
 
         """
@@ -293,10 +442,9 @@ class UtilizationStatisticsMixin(object):
     def util_by_year(self):
         """Returns utilization statistics by year.
 
-        See DocBlock of util_by_time for full time grouping behavior.  See
+        See DocBlock of util_by_time for full time grouping behavior. See
         DocBlock of util_statistics for expected keys in the dict returned.
 
         """
         util = self.util_by_time(SECONDS_IN_A_YEAR)
         return self.util_statistics(util)
-

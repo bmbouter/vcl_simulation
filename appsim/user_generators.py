@@ -54,7 +54,8 @@ class DataFileGenerator(Process):
     def execute(self):
         """Begins user generations to the application cluster
 
-        csv files should be comma separated in the form interarrival,service"""
+        csv files should be comma separated in the form interarrival,service
+        """
 
         dataReader = csv.reader(open(self.data_path, 'rb'), delimiter=',')
         user_num = 1
@@ -65,6 +66,7 @@ class DataFileGenerator(Process):
                 raise Exception('Service time should not be less than 0')
             yield hold, self, interarrival_time
             L = User("User %s" % user_num, sim=self.sim)
-            self.sim.activate(L, L.execute(service_time, self.sim.cluster), delay=0)
+            loss_assumption = False
+            self.sim.activate(L, L.execute(service_time, self.sim.cluster, loss_assumption), delay=0)
             user_num = user_num + 1
         raise NoMoreUsersException()

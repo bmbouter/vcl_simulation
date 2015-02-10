@@ -1,4 +1,5 @@
 import os
+import sys
 
 from appsim.sim import DataFilePolicyDataFileUserSim, ErlangDataPolicyDataFileUserSim
 from common import fixed_startup_delay, normal_distribution_startup_delay
@@ -49,6 +50,7 @@ def second_half_vcl_data_predicted_from_first_half():
 
 
 def poisson_traffic_known_in_advance():
+    print_results_header('poisson_known_in_advance')
     scheduled = ErlangDataPolicyDataFileUserSim()
     pred_user_count_file_path = 'data/2008_five_minute_counts.csv'
     users_data_file_path = 'data/2008_year_arrivals.txt'
@@ -180,7 +182,7 @@ def fixed_policy_not_segmented():
 
 def moving_average():
     param_name = 'k'
-    #print_results_header(param_name)
+    print_results_header(param_name)
     for k in range(1,51):
         scheduled = ErlangDataPolicyDataFileUserSim()
         pred_user_count_file_path = 'data/ma_arrivals/arrivals_k_%s.txt' % k
@@ -825,10 +827,19 @@ def mixed_autoregressive_policy_shutdown_delay_analysis():
         #print_all_results(results)
 
 
+def select_model_from_environment_var():
+    method_name = os.getenv('METHOD_TO_RUN', None)
+    if method_name:
+        fun = getattr(sys.modules[__name__], method_name)
+        fun()
+
+
 if __name__ == "__main__":
     if not os.path.isfile('scheduled_capacity.py'):
         print 'Please run in the same directory as scheduled_capacity.py'
         exit()
+    #select_model_from_environment_var()
+
     #poisson_traffic_known_in_advance()
 
     #fixed_policy_user_arrivals()

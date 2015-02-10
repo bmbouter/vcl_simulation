@@ -12,15 +12,19 @@ class User(Process):
     """
         
     NoTotal = 0
-    def execute(self, stime, cluster):
+    def execute(self, stime, cluster, loss_assumption):
         """Simulate a single user
 
         Parameters:
         stime -- the service time the user should use service for
         cluster -- the cluster this user is to arrive at
-
+        loss_assumption -- If True, a customer who is blocked leaves the
+                           system immediately. Otherwise customers stay
+                           around in a FCFS queue until they can be served.
         """
         User.NoTotal += 1
+        if not loss_assumption:
+            yield request, self, cluster.cluster_resource
         server = cluster.find_server()
         cluster_size = len(cluster.booting) + len(cluster.active) \
             + len(cluster.shutting_down)
@@ -35,4 +39,5 @@ class User(Process):
             yield request, self, server
             yield hold, self, stime
             yield release, self, server
-
+        if not loss_assumption:
+            yield release, self, cluster.cluster_resource
