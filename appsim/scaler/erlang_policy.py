@@ -10,11 +10,7 @@ import sys
 from scaler import Scale
 
 def get_erlang_c_memo_filename():
-    method_name = os.getenv('METHOD_TO_RUN', None)
-    if method_name:
-        filename = method_name + '.pkl'
-    else:
-        filename = 'service_level_memo.pkl'
+    filename = 'service_level_memo.pkl'
     return 'data' + os.sep + 'erlang_c_memo_data' + os.sep + filename
 
 
@@ -61,9 +57,10 @@ def find_erlang_C_service_level_memoized(s, t, lamda, avg_service_time):
 
     :return: The number of servers such that P(wait <= t) >= s
     """
+    global service_level_memo
     memo_tuple = tuple([s, t, lamda])
-    previous_result = service_level_memo.get(memo_tuple, None)
-    if previous_result:
+    previous_result = service_level_memo.get(memo_tuple)
+    if previous_result is not None:
         return previous_result
     for i in count(int(math.ceil(lamda * avg_service_time))):
         service_level = find_erlang_C_service_level(t, lamda, avg_service_time, i)
