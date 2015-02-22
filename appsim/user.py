@@ -23,13 +23,17 @@ class User(Process):
                            around in a FCFS queue until they can be served.
         """
         User.NoTotal += 1
+        self.arrival_time = self.sim.now()
         if not loss_assumption:
             yield request, self, cluster.cluster_resource
         server = cluster.find_server()
+        if server is None:
+            raise RuntimeError('This customer was not able to find a server. With loss assumption=True it should be guaranteed to find one. Something is wrong.')
+        self.wait_time = self.sim.now() - self.arrival_time
+        self.sim.mWaitTime.observe(self.wait_time)
         cluster_size = len(cluster.booting) + len(cluster.active) \
             + len(cluster.shutting_down)
         self.sim.mNumServers.observe(cluster_size)
-        self.arrival_time = self.sim.now()
         if server is None:
             self.sim.mBlocked.observe(1)
             self.sim.mLostServiceTimes.observe(stime)

@@ -54,6 +54,8 @@ class MMCmodel(Simulation, UtilizationStatisticsMixin):
         self.mClusterBooting = Monitor(sim=self)  # monitor cluster.booting
         self.mClusterShuttingDown = Monitor(sim=self)  # cluster.shutting_down
         self.mClusterOccupancy = Monitor(sim=self)  # utilized seats
+        ### Wait Time Monitors
+        self.mWaitTime = Monitor(sim=self) # wait time of each customer
         ### Customer Monitors
         self.mBlocked = Monitor(sim=self)  # ifcustomer is blocked or not
         self.mNumServers = Monitor(sim=self)  # cluster active+booting+shutting
@@ -158,15 +160,18 @@ class MMCmodel(Simulation, UtilizationStatisticsMixin):
         util_by_month = self.util_by_month
         util_by_year = self.util_by_year
 
+        # filter for only second year data
+        self.mWaitTime = filter(lambda data: data[0] > 15768000, self.mWaitTime)
+
         # Add in waiting time info
-        wts = WaitTimeStatistics(self.cluster.cluster_resource.waitMon)
+        wts = WaitTimeStatistics(self.mWaitTime)
         wait_times_by_hour = wts.wait_times_by_hour
         wait_times_by_day = wts.wait_times_by_day
         wait_times_by_week = wts.wait_times_by_week
         wait_times_by_month = wts.wait_times_by_month
         wait_times_by_year = wts.wait_times_by_year
         (mean_wait_time, mean_wait_time_delta) = wts.batchmean
-        wait_times_year_99_percentile = np.percentile([c[1] for c in self.cluster.cluster_resource.waitMon], 99)
+        wait_times_year_99_percentile = np.percentile([c[1] for c in self.mWaitTime], 99)
 
         # add in bp percent error and bp raw timescales
         bp_percent_error = 100 * (bp_delta / bp if bp else 0)
