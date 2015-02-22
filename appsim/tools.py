@@ -147,6 +147,14 @@ class MonitorStatistics(object):
         delta = (math.sqrt(s_squared) / math.sqrt(30)) * 1.96
         return (average, delta)
 
+    @property
+    def mean(self):
+        """ Returns the mean of the statistic.
+
+        :return: Returns a simple mean of the statistic
+        """
+        return np.mean([data[1] for data in self.monitor])
+
 
 class WaitTimeStatistics(object):
     """Calculates statistics from a SimPy monitor"""
@@ -291,6 +299,14 @@ class WaitTimeStatistics(object):
         s_squared = sum_xi_minus_xbar / len(xi_minus_xbar)
         delta = (math.sqrt(s_squared) / math.sqrt(30)) * 1.96
         return (average, delta)
+
+    @property
+    def mean(self):
+        """ Returns the mean of the statistic.
+
+        :return: Returns a simple mean of the statistic
+        """
+        return np.mean([data[1] for data in self.monitor])
 
 
 class UtilizationStatisticsMixin(object):
