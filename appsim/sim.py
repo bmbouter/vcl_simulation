@@ -151,6 +151,16 @@ class MMCmodel(Simulation, UtilizationStatisticsMixin):
         bp_by_month = MonitorStatistics(self.mBlocked).bp_by_month
         bp_by_year = MonitorStatistics(self.mBlocked).bp_by_year
 
+        # filter for only second year data
+        self.mServerProvisionLength = filter(lambda data: data[0] > 15768000, self.mServerProvisionLength)
+        # subtract out the times from the first year
+        self.mServerProvisionLength = [[data[0] - 15768000, data[1]] for data in self.mServerProvisionLength]
+
+        # filter for only second year data
+        self.mAcceptServiceTimes = filter(lambda data: data[0] > 15768000, self.mAcceptServiceTimes)
+        # subtract out the times from the first year
+        self.mAcceptServiceTimes = [[data[0] - 15768000, data[1]] for data in self.mAcceptServiceTimes]
+
         # compute utilization
         mean_utilization = self.get_mean_utilization()
         # compute utilization timescales
@@ -162,6 +172,8 @@ class MMCmodel(Simulation, UtilizationStatisticsMixin):
 
         # filter for only second year data
         self.mWaitTime = filter(lambda data: data[0] > 15768000, self.mWaitTime)
+        # subtract out the times from the first year
+        self.mWaitTime = [[data[0] - 15768000, data[1]] for data in self.mWaitTime]
 
         # Add in waiting time info
         wts = WaitTimeStatistics(self.mWaitTime)

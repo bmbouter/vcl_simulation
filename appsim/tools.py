@@ -179,7 +179,7 @@ class WaitTimeStatistics(object):
 
         """
         time_interval = float(time_interval)
-        num_buckets = int(math.ceil(SECONDS_IN_A_YEAR / time_interval))
+        num_buckets = int(math.ceil((SECONDS_IN_A_YEAR / 2) / time_interval))
         bucket_observations = [[] for i in range(num_buckets)]
         for observation in self.monitor:
             observation_time = observation[0]
@@ -314,10 +314,10 @@ class UtilizationStatisticsMixin(object):
     """
 
     def get_mean_utilization(self):
-        """Compute the total average utilization.
-        """
-        total_seat_time = self.mServerProvisionLength.total() * self.cluster.density
-        used_seat_time = self.mAcceptServiceTimes.total()
+        """Compute the total average utilization."""
+        total_mServerProvisionLength = sum([data[1] for data in self.mServerProvisionLength])
+        total_seat_time = total_mServerProvisionLength * self.cluster.density
+        used_seat_time = sum([data[1] for data in self.mAcceptServiceTimes])
         return used_seat_time / total_seat_time
 
     def util_by_time(self, time_interval):
