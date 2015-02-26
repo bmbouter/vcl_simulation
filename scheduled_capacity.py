@@ -77,7 +77,7 @@ def fixed_policy_user_arrivals():
         #results = scheduled.run(prov_data_file_path, users_data_file_path, density, startup_delay_func, shutdown_delay)
         results['param'] = capacity
         results['param_name'] = param_name
-        write_bp_timescale_raw_to_file('fixed', results)
+        #write_bp_timescale_raw_to_file('fixed', results)
         #print_simple_results(results)
         print_all_results(results)
 
@@ -397,7 +397,7 @@ def exponential_moving_average():
         # results = scheduled.run(worst_bp, pred_user_count_file_path, mu, users_data_file_path, lag, density, scale_rate, startup_delay_func, shutdown_delay)
         results['param'] = alpha
         results['param_name'] = param_name
-        write_bp_timescale_raw_to_file('ema', results)
+        #write_bp_timescale_raw_to_file('ema', results)
         #print_simple_results(results)
         print_all_results(results)
 

@@ -8,13 +8,12 @@ from appsim.scaler.reserve_policy import ReservePolicy, TimeVaryReservePolicy
 from appsim.scaler.fixed_size_policy import FixedSizePolicy
 from appsim.scaler.data_file_policy import GenericDataFileScaler
 from appsim.scaler.erlang_policy import ErlangBFormulaDataPolicy
-from tools import MonitorStatistics, UtilizationStatisticsMixin, \
-    SECONDS_IN_A_YEAR, WaitTimeStatistics
+from tools import MonitorStatistics, SECONDS_IN_A_YEAR, WaitTimeStatistics
 from user_generators import PoissonGenerator, DataFileGenerator
 from user_generators import NoMoreUsersException
 
 
-class MMCmodel(Simulation, UtilizationStatisticsMixin):
+class MMCmodel(Simulation):
     """A highly customizable simpy M/M/C Erlang-loss system
 
     MMCmodel is a simulation which brings together different simulation
@@ -131,6 +130,13 @@ class MMCmodel(Simulation, UtilizationStatisticsMixin):
                 new_service_time = current_sim_time - item[0]
                 self.mLostServiceTimes[i][1] = new_service_time
 
+    def get_mean_utilization(self):
+        """Compute the total average utilization."""
+        total_mServerProvisionLength = sum([data[1] for data in self.mServerProvisionLength])
+        total_seat_time = total_mServerProvisionLength * self.cluster.density
+        used_seat_time = sum([data[1] for data in self.mAcceptServiceTimes])
+        return used_seat_time / total_seat_time
+
     def run(self):
         """Runs an MMCmodel simulation"""
         self.activate(self.scaler, self.scaler.execute())
@@ -151,6 +157,7 @@ class MMCmodel(Simulation, UtilizationStatisticsMixin):
         bp_by_month = MonitorStatistics(self.mBlocked).bp_by_month
         bp_by_year = MonitorStatistics(self.mBlocked).bp_by_year
 
+        #self.mServerProvisionLength = [[0, 15768000]] # Uncomment for fixed capacity utilization calculation
         # filter for only second year data
         self.mServerProvisionLength = filter(lambda data: data[0] > 15768000, self.mServerProvisionLength)
         # subtract out the times from the first year
@@ -163,12 +170,6 @@ class MMCmodel(Simulation, UtilizationStatisticsMixin):
 
         # compute utilization
         mean_utilization = self.get_mean_utilization()
-        # compute utilization timescales
-        util_by_hour = self.util_by_hour
-        util_by_day = self.util_by_day
-        util_by_week = self.util_by_week
-        util_by_month = self.util_by_month
-        util_by_year = self.util_by_year
 
         # filter for only second year data
         self.mWaitTime = filter(lambda data: data[0] > 15768000, self.mWaitTime)
@@ -199,11 +200,6 @@ class MMCmodel(Simulation, UtilizationStatisticsMixin):
                             'bp_by_week': bp_by_week,
                             'bp_by_month': bp_by_month,
                             'bp_by_year': bp_by_year,
-                            'util_by_hour': util_by_hour,
-                            'util_by_day': util_by_day,
-                            'util_by_week': util_by_week,
-                            'util_by_month': util_by_month,
-                            'util_by_year': util_by_year,
                             'wait_times_by_hour': wait_times_by_hour,
                             'wait_times_by_day': wait_times_by_day,
                             'wait_times_by_week': wait_times_by_week,
