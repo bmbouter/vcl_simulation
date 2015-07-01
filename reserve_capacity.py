@@ -1,6 +1,8 @@
 import os
 
-from appsim.sim import ReservePolicyDataFileUserSim, TimeVaryReservePolicyDataFileUserSim
+from appsim.sim import (ARHMMReservePolicySim, DataDrivenReservePolicySim,
+                        ReservePolicyDataFileUserSim,
+                        TimeVaryReservePolicyDataFileUserSim)
 from common import fixed_startup_delay, normal_distribution_startup_delay
 from output_utils import print_results_header, print_all_results, print_simple_results, print_wait_time
 
@@ -15,6 +17,7 @@ num_customers = 50000
 
 
 three_hundred_second_startup_delay = fixed_startup_delay(300)
+zero_startup_delay = fixed_startup_delay(0)
 
 
 def write_bp_timescale_raw_to_file(model_name, results):
@@ -49,7 +52,7 @@ def reserve_policy_data_file_user_sim_table():
         #reserve.run(reserved, users_data_file_path, density, scale_rate, startup_delay_func, shutdown_delay)
         results['param'] = R
         results['param_name'] = param_name
-        write_bp_timescale_raw_to_file('reserve', results)
+        #write_bp_timescale_raw_to_file('reserve', results)
         print_simple_results(results)
         #print_all_results(results)
 
@@ -219,6 +222,101 @@ def time_vary_reserve_policy_data_file_user_sim_density_analysis():
             #print_all_results(results)
 
 
+def moving_average_reserve_capacity():
+    param_name = 'k_12_lag_1.txt'
+    print_results_header(param_name)
+    reserve = DataDrivenReservePolicySim()
+    reserve_capacity_data_file = 'data/ma_arrivals_k_12_lag_1.txt'
+    users_data_file_path = 'data/2008_year_arrivals.txt'
+    results = reserve.run(reserve_capacity_data_file, users_data_file_path, 2, 300, three_hundred_second_startup_delay, 300)
+    #reserve.run(reserve_capacity_data_file, users_data_file_path, density, scale_rate, startup_delay_func, shutdown_delay)
+    results['param'] = param_name
+    print_simple_results(results)
+
+
+def exponential_moving_reserve_capacity():
+    param_name = 'alpha_0.15_lag_1.txt'
+    print_results_header(param_name)
+    reserve = DataDrivenReservePolicySim()
+    reserve_capacity_data_file = 'data/ema_arrivals_alpha_0.15_lag_1.txt'
+    users_data_file_path = 'data/2008_year_arrivals.txt'
+    results = reserve.run(reserve_capacity_data_file, users_data_file_path, 2, 300, three_hundred_second_startup_delay, 300)
+    #reserve.run(reserve_capacity_data_file, users_data_file_path, density, scale_rate, startup_delay_func, shutdown_delay)
+    results['param'] = param_name
+    print_simple_results(results)
+
+
+def autoregressive_reserve_capacity():
+    param_name = 'AR(2)_lag_1'
+    reserve = DataDrivenReservePolicySim()
+    reserve_capacity_data_file = 'data/ar_2_lag_1.txt'
+    users_data_file_path = 'data/2008_year_arrivals.txt'
+    results = reserve.run(reserve_capacity_data_file, users_data_file_path, 2, 300, three_hundred_second_startup_delay, 300)
+    #reserve.run(reserve_capacity_data_file, users_data_file_path, density, scale_rate, startup_delay_func, shutdown_delay)
+    results['param'] = param_name
+    print_simple_results(results)
+
+
+def mixed_autoregressive_reserve_capacity():
+    param_name = 'mixed_AR(2)_lag_1'
+    reserve = DataDrivenReservePolicySim()
+    reserve_capacity_data_file = 'data/mixed_ar_2_lag_1.txt'
+    users_data_file_path = 'data/2008_year_arrivals.txt'
+    results = reserve.run(reserve_capacity_data_file, users_data_file_path, 2, 300, three_hundred_second_startup_delay, 300)
+    #reserve.run(reserve_capacity_data_file, users_data_file_path, density, scale_rate, startup_delay_func, shutdown_delay)
+    results['param'] = param_name
+    print_simple_results(results)
+
+
+def reserve_two_sim():
+    param_name = 'R=2'
+    reserve = ReservePolicyDataFileUserSim()
+    users_data_file_path = 'data/2008_year_arrivals.txt'
+    results = reserve.run(2, users_data_file_path, 2, 300, three_hundred_second_startup_delay, 300)
+    #reserve.run(reserved, users_data_file_path, density, scale_rate, startup_delay_func, shutdown_delay)
+    results['param'] = param_name
+    print_simple_results(results)
+
+
+def reserve_ar_5_hmm_3_policy():
+    param_name = 'AR(5)-HMM(3)'
+    print_results_header(param_name)
+    reserve = ARHMMReservePolicySim()
+    five_minute_counts_file = 'data/2008_five_minute_counts.csv'
+    users_data_file_path = 'data/2008_year_arrivals.txt'
+    results = reserve.run(five_minute_counts_file, users_data_file_path, 2, 300, three_hundred_second_startup_delay, 300)
+    #reserve.run(five_minute_counts_file, users_data_file_path, density, scale_rate, startup_delay_func, shutdown_delay)
+    results['param'] = param_name
+    results['param_name'] = param_name
+    #write_bp_timescale_raw_to_file('reserve', results)
+    print_simple_results(results)
+    #print_all_results(results)
+
+
+def data_driven_reserve_policy_no_delay():
+    param_name = 'pre_known_R_no_delay'
+    print_results_header(param_name)
+    reserve = DataDrivenReservePolicySim()
+    reserve_capacity_data_file = 'data/2008_five_minute_counts.csv'
+    users_data_file_path = 'data/2008_year_arrivals.txt'
+    results = reserve.run(reserve_capacity_data_file, users_data_file_path, 2, 300, zero_startup_delay, 0)
+    #reserve.run(reserve_capacity_data_file, users_data_file_path, density, scale_rate, startup_delay_func, shutdown_delay)
+    results['param'] = param_name
+    print_simple_results(results)
+
+
+def data_driven_reserve_policy_with_delay():
+    param_name = 'pre_known_R_with_delay'
+    print_results_header(param_name)
+    reserve = DataDrivenReservePolicySim()
+    reserve_capacity_data_file = 'data/2008_five_minute_counts.csv'
+    users_data_file_path = 'data/2008_year_arrivals.txt'
+    results = reserve.run(reserve_capacity_data_file, users_data_file_path, 2, 300, three_hundred_second_startup_delay, 300)
+    #reserve.run(reserve_capacity_data_file, users_data_file_path, density, scale_rate, startup_delay_func, shutdown_delay)
+    results['param'] = param_name
+    print_simple_results(results)
+
+
 if __name__ == "__main__":
     if not os.path.isfile('reserve_capacity.py'):
         print 'Please run in the same directory as reserve_capacity.py'
@@ -238,3 +336,14 @@ if __name__ == "__main__":
 
     #time_vary_reserve_policy_data_file_user_sim_table()
     #time_vary_reserve_policy_data_file_user_sim_density_analysis()
+
+    #moving_average_reserve_capacity()
+    #exponential_moving_reserve_capacity()
+    #autoregressive_reserve_capacity()
+    #mixed_autoregressive_reserve_capacity()
+    reserve_two_sim()
+
+    #reserve_ar_5_hmm_3_policy()
+
+    #data_driven_reserve_policy_no_delay()
+    #data_driven_reserve_policy_with_delay()

@@ -1,17 +1,21 @@
 from SimPy.SimulationTrace import * ## Only change in program!
 
+
+active_users = {}
+
+
 class User(Process):
 
-    """Users request an application and hold it for an exponential time
+    """
+    Users request an application and hold it for an exponential time
 
     Class variables:
     NoInSystem -- The total number of users which have been generated
     NoAccepted -- The number of users who received service
     NoDenied -- The number of users who were denied service
-
     """
-        
-    NoTotal = 0
+
+    user_count = 0
     def execute(self, stime, cluster, loss_assumption):
         """Simulate a single user
 
@@ -22,12 +26,14 @@ class User(Process):
                            system immediately. Otherwise customers stay
                            around in a FCFS queue until they can be served.
         """
-        User.NoTotal += 1
+        global active_users
+        self.id = User.user_count
+        User.user_count = User.user_count + 1
         self.arrival_time = self.sim.now()
         if not loss_assumption:
             yield request, self, cluster.cluster_resource
         server = cluster.find_server()
-        if server is None:
+        if not loss_assumption and server is None:
             raise RuntimeError('This customer was not able to find a server. With loss assumption=True it should be guaranteed to find one. Something is wrong.')
         self.wait_time = self.sim.now() - self.arrival_time
         self.sim.mWaitTime.observe(self.wait_time)
@@ -40,8 +46,13 @@ class User(Process):
         else:
             self.sim.mBlocked.observe(0)
             self.sim.mAcceptServiceTimes.observe(stime)
+            request_server_time = self.sim.now()
             yield request, self, server
+            if self.sim.now() != request_server_time:
+                raise RuntimeError('Requesting server should take 0 seconds')
+            active_users[self.id] = self.sim.now()
             yield hold, self, stime
+            del active_users[self.id]
             yield release, self, server
         if not loss_assumption:
             yield release, self, cluster.cluster_resource

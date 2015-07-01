@@ -26,7 +26,7 @@ def load_erlang_c_memo_file(filename):
 
 
 filename = get_erlang_c_memo_filename()
-service_level_memo = load_erlang_c_memo_file(filename)
+service_level_memo = None
 
 
 def sigint_handler(signal, frame):
@@ -35,9 +35,11 @@ def sigint_handler(signal, frame):
 
 
 def save_service_level_memo():
-    output = open(filename, 'wb')
-    cPickle.dump(service_level_memo, output)
-    output.close()
+    if service_level_memo is not None:
+        output = open(filename, 'wb')
+        cPickle.dump(service_level_memo, output)
+        output.close()
+
 
 #signal.signal(signal.SIGINT, sigint_handler)
 
@@ -58,6 +60,8 @@ def find_erlang_C_service_level_memoized(s, t, lamda, avg_service_time):
     :return: The number of servers such that P(wait <= t) >= s
     """
     global service_level_memo
+    if service_level_memo is None:
+        service_level_memo = load_erlang_c_memo_file(filename)
     memo_tuple = tuple([s, t, lamda])
     previous_result = service_level_memo.get(memo_tuple)
     if previous_result is not None:

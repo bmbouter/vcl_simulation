@@ -1,9 +1,11 @@
 import os
 import sys
 
-from appsim.sim import DataFilePolicyDataFileUserSim, ErlangDataPolicyDataFileUserSim
+from appsim.sim import (DataFilePolicyDataFileUserSim,
+                        ErlangDataPolicyDataFileUserSim)
 from common import fixed_startup_delay, normal_distribution_startup_delay
-from output_utils import print_results_header, print_all_results, print_simple_results
+from output_utils import (print_all_results, print_results_header,
+                          print_simple_results)
 
 
 zero_second_startup_delay = fixed_startup_delay(0)
@@ -838,7 +840,6 @@ if __name__ == "__main__":
     if not os.path.isfile('scheduled_capacity.py'):
         print 'Please run in the same directory as scheduled_capacity.py'
         exit()
-    #select_model_from_environment_var()
 
     #poisson_traffic_known_in_advance()
 
@@ -888,3 +889,5 @@ if __name__ == "__main__":
     #mixed_autoregressive_density()
     #mixed_autoregressive_policy_startup_delay_analysis()
     #mixed_autoregressive_policy_shutdown_delay_analysis()
+
+    #select_model_from_environment_var()

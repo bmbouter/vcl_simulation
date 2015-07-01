@@ -23,7 +23,7 @@ def print_simple_results(results, timescale='yearly_mean'):
         print('%s,%.4f,%.4f,%.4f' % (results['param'], bp_result, results['bp_batch_mean_delta'], results['mean_utilization']))
 
 def print_wait_time_header(param_name):
-    print "%s,mean_utilization,wait_time_by_hour_99,wait_time_by_day_99,wait_time_by_week_99,wait_times_year_99_percentile,wait_time_mean" % param_name
+    print "%s,mean_utilization,total_provisioned_time,wait_time_by_hour_99,wait_time_by_day_99,wait_time_by_week_99,wait_times_year_99_percentile,wait_time_mean" % param_name
 
 def print_wait_time(results):
-    print('%s,%.4f,%.2f,%.2f,%.2f,%.2f,%.2f' % (results['param'], results['mean_utilization'], results['wait_times_by_hour']['wait_times_99percentile'], results['wait_times_by_day']['wait_times_99percentile'], results['wait_times_by_week']['wait_times_99percentile'], results['wait_times_year_99_percentile'], results['wait_times_batch_mean']))
+    print('%s,%.4f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f' % (results['param'], results['mean_utilization'], results['total_provisioned_time'], results['wait_times_by_hour']['wait_times_99percentile'], results['wait_times_by_day']['wait_times_99percentile'], results['wait_times_by_week']['wait_times_99percentile'], results['wait_times_year_99_percentile'], results['wait_times_batch_mean']))

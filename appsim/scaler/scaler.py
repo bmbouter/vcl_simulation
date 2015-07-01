@@ -1,9 +1,12 @@
 from SimPy.Simulation import Process, hold
 
 from appsim.cluster import Cluster
+from appsim.feature import FeatureFlipper
+
 
 class NotImplementedException(Exception):
     pass
+
 
 class Scale(Process):
 
@@ -39,12 +42,22 @@ class Scale(Process):
         the logic through subclassing.
 
         """
-
         while True:
             # Put the 'ready' VMs into service
             not_to_be_shut_off_list = []
 
             servers_to_start, servers_to_stop = self.scaler_logic()
+
+            if not isinstance(servers_to_start, int):
+                raise RuntimeError('Expected servers_to_start to be an int')
+            if not isinstance(servers_to_stop, int):
+                raise RuntimeError('Expected servers_to_stop to be an int')
+            if servers_to_start != 0 and servers_to_stop != 0:
+                raise RuntimeError('Starting and Stopping servers does not make sense')
+
+            if FeatureFlipper.add_capacity_for_waiting_users():
+                servers_to_start = servers_to_start + len(self.sim.cluster.cluster_resource.waitQ)
+
             stopped_count = 0
 
             for server in range(servers_to_start):
@@ -73,7 +86,7 @@ class Scale(Process):
 
             # Look for VMs to shut off
             for server in self.sim.cluster.active:
-                if server.activeQ == [] and server not in not_to_be_shut_off_list and servers_to_stop > 0:
+                if server.activeQ == [] and server not in not_to_be_shut_off_list and servers_to_stop >= 1:
                     stopped_count = stopped_count + 1
                     servers_to_stop = servers_to_stop - 1
                     server.power_off_time = self.sim.now() + self.shutdown_delay
@@ -102,7 +115,14 @@ class Scale(Process):
             yield hold, self, self.sleep()
 
     def sleep(self):
-        """Returns the amount of simulation time simpy should sleep for"""
+        """Returns the amount of simulation time simpy should sleep for
+
+        The first scale event should occur < 1 second early to ensure that
+        arrivals and scale events that occur at the same second are not
+        handled in arbitrary order
+        """
+        if self.sim.now() == 0:
+            return self.scale_rate - 0.01
         return self.scale_rate
 
     def scaling_complete(self, stopped_count):

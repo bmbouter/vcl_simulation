@@ -56,15 +56,15 @@ class DataFileGenerator(Process):
 
         csv files should be comma separated in the form interarrival,service
         """
-
         dataReader = csv.reader(open(self.data_path, 'rb'), delimiter=',')
         user_num = 1
         for row in dataReader:
             interarrival_time = float(row[0])
             service_time = float(row[1])
+            yield hold, self, interarrival_time
+            self.sim.arrivalMonitor.observe(1)
             if service_time < 0:
                 raise Exception('Service time should not be less than 0')
-            yield hold, self, interarrival_time
             L = User("User %s" % user_num, sim=self.sim)
             loss_assumption = False
             self.sim.activate(L, L.execute(service_time, self.sim.cluster, loss_assumption), delay=0)

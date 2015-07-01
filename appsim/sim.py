@@ -1,10 +1,14 @@
+import math
 from random import seed
 
 import numpy as np
 from SimPy.Simulation import *
 
 from cluster import Cluster
-from appsim.scaler.reserve_policy import ReservePolicy, TimeVaryReservePolicy
+from appsim.scaler.reserve_policy import (ARHMMReservePolicy,
+                                          DataDrivenReservePolicy,
+                                          ReservePolicy,
+                                          TimeVaryReservePolicy)
 from appsim.scaler.fixed_size_policy import FixedSizePolicy
 from appsim.scaler.data_file_policy import GenericDataFileScaler
 from appsim.scaler.erlang_policy import ErlangBFormulaDataPolicy
@@ -59,6 +63,7 @@ class MMCmodel(Simulation):
         self.mBlocked = Monitor(sim=self)  # ifcustomer is blocked or not
         self.mNumServers = Monitor(sim=self)  # cluster active+booting+shutting
         self.mServerProvisionLength = Monitor(sim=self)  # online time
+        self.arrivalMonitor = Monitor(sim=self)  # user arrival monitor
 
         # service times of customers who were accepted
         self.mAcceptServiceTimes = Monitor(sim=self)
@@ -157,23 +162,45 @@ class MMCmodel(Simulation):
         bp_by_month = MonitorStatistics(self.mBlocked).bp_by_month
         bp_by_year = MonitorStatistics(self.mBlocked).bp_by_year
 
+        # time_interval = float(300)
+        # num_buckets = int(math.ceil(SECONDS_IN_A_YEAR / time_interval))
+        # bucket_observations = [[] for i in range(num_buckets)]
+        # for observation in self.arrivalMonitor:
+        #     observation_time = observation[0]
+        #     index = int(math.floor(observation_time / time_interval))
+        #     bucket_observations[index].append(observation)
+        # arrival_counts = [len(observation) for observation in bucket_observations]
+        # counts_file = open('data/2008_five_minute_counts.csv', 'r')
+        # #counts_file = open('/tmp/observed_arrivals.csv', 'r')
+        # diffs = []
+        # o = open('/tmp/observed_arrivals.csv', 'w')
+        # for i, line in enumerate(counts_file):
+        #     o.write('%s\n' % arrival_counts[i])
+        #     count = float(line)
+        #     if count != arrival_counts[i]:
+        #         diff = arrival_counts[i] - count
+        #         print 'diff: %s at position %s' % (diff, i)
+        #         diffs.append(diff)
+        #
+        # o.close()
+
         #self.mServerProvisionLength = [[0, 15768000]] # Uncomment for fixed capacity utilization calculation
-        # filter for only second year data
+        # filter out first half of year data
         self.mServerProvisionLength = filter(lambda data: data[0] > 15768000, self.mServerProvisionLength)
-        # subtract out the times from the first year
+        # subtract out the times from the first half of the year
         self.mServerProvisionLength = [[data[0] - 15768000, data[1]] for data in self.mServerProvisionLength]
 
-        # filter for only second year data
+        # filter out first half of year data
         self.mAcceptServiceTimes = filter(lambda data: data[0] > 15768000, self.mAcceptServiceTimes)
-        # subtract out the times from the first year
+        # subtract out the times from the first half of the year
         self.mAcceptServiceTimes = [[data[0] - 15768000, data[1]] for data in self.mAcceptServiceTimes]
 
         # compute utilization
         mean_utilization = self.get_mean_utilization()
 
-        # filter for only second year data
+        # filter out first half of year data
         self.mWaitTime = filter(lambda data: data[0] > 15768000, self.mWaitTime)
-        # subtract out the times from the first year
+        # subtract out the times from the first half of the year
         self.mWaitTime = [[data[0] - 15768000, data[1]] for data in self.mWaitTime]
 
         # Add in waiting time info
@@ -185,6 +212,8 @@ class MMCmodel(Simulation):
         wait_times_by_year = wts.wait_times_by_year
         (mean_wait_time, mean_wait_time_delta) = wts.batchmean
         wait_times_year_99_percentile = np.percentile([c[1] for c in self.mWaitTime], 99)
+
+        total_mServerProvisionLength = sum([data[1] for data in self.mServerProvisionLength])
 
         # add in bp percent error and bp raw timescales
         bp_percent_error = 100 * (bp_delta / bp if bp else 0)
@@ -208,6 +237,7 @@ class MMCmodel(Simulation):
                             'wait_times_batch_mean': mean_wait_time,
                             'wait_times_batch_mean_delta': mean_wait_time_delta,
                             'wait_times_year_99_percentile': wait_times_year_99_percentile,
+                            'total_provisioned_time': total_mServerProvisionLength,
                             'num_servers': num_servers,
                             'ns_delta': ns_delta,
                             'bp_batch_mean_percent_error': bp_percent_error,
@@ -305,6 +335,70 @@ class ReservePolicyDataFileUserSim(MMCmodel):
         """
         self.scaler = ReservePolicy(self, scale_rate, startup_delay_func,
                                     shutdown_delay, reserved)
+        self.cluster = Cluster(self, density=density)
+        self.user_generator = DataFileGenerator(self, users_data_file_path)
+        return MMCmodel.run(self)
+
+
+class DataDrivenReservePolicySim(MMCmodel):
+    """
+    Designed to run MMCmodel with Data driven Reserve Policy with user
+    arrivals and departures scheduled from a data file containing
+    interarrival and service times.
+    """
+
+    def run(self, reserve_capacity_data_file, users_data_file_path, density,
+            scale_rate, startup_delay_func, shutdown_delay):
+        """
+        Runs the simulation with user driven arrivals.
+
+        Parameters:
+        reserve_capacity_data_file -- The path to a file containing reserve
+            capacity values per five-minute arrival periods.
+        users_data_file_path -- a file path to the user data file with two
+            comma separated columns. interarrival time, service time
+        density -- the number of application seats per virtual machine
+        scale_rate -- The interarrival time between scale events in seconds
+        startup_delay_func -- A callable that returns the time a server spends
+            in the booting state
+        shutdown_delay -- the time a server spends in the shutting_down state
+
+        """
+        self.scaler = DataDrivenReservePolicy(self, scale_rate,
+                                              startup_delay_func,
+                                              shutdown_delay,
+                                              reserve_capacity_data_file)
+        self.cluster = Cluster(self, density=density)
+        self.user_generator = DataFileGenerator(self, users_data_file_path)
+        return MMCmodel.run(self)
+
+
+class ARHMMReservePolicySim(MMCmodel):
+    """
+    Designed to run MMCmodel with ARHMM Reserve Policy with user arrivals and
+    departures scheduled from a data file containing interarrival and service
+    times.
+    """
+
+    def run(self, five_minute_counts_file, users_data_file_path, density,
+            scale_rate, startup_delay_func, shutdown_delay):
+        """
+        Runs the simulation with user driven a
+
+        Parameters:
+        five_minute_counts_file -- The path to a file containing all five-minute
+            arrival counts.
+        users_data_file_path -- a file path to the user data file with two
+            comma separated columns. interarrival time, service time
+        density -- the number of application seats per virtual machine
+        scale_rate -- The interarrival time between scale events in seconds
+        startup_delay_func -- A callable that returns the time a server spends
+            in the booting state
+        shutdown_delay -- the time a server spends in the shutting_down state
+
+        """
+        self.scaler = ARHMMReservePolicy(self, scale_rate, startup_delay_func,
+                                    shutdown_delay, five_minute_counts_file)
         self.cluster = Cluster(self, density=density)
         self.user_generator = DataFileGenerator(self, users_data_file_path)
         return MMCmodel.run(self)
