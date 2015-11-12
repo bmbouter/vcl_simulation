@@ -49,7 +49,25 @@ class DataFileGenerator(Process):
         """
         self.data_path = data_path
         self.sim = sim
+        self.user_count_since_last_scale = 0
         Process.__init__(self, name='User Arrival Generator', sim=self.sim)
+
+    def reset_user_count_since_scale(self):
+        """
+        Resets the user count to 0 so that the counter can increment it as new users arrive.
+
+        :return: None
+        """
+        self.user_count_since_last_scale = 0
+
+    def get_user_count_since_scale(self):
+        """
+        Return the user count since the last time reset_user_count_since_scale() was called
+
+        :return: The integer count of users that have arrived since the last call to reset_user_count_since_scale()
+        :rtype: int
+        """
+        return self.user_count_since_last_scale
 
     def execute(self):
         """Begins user generations to the application cluster
@@ -66,7 +84,7 @@ class DataFileGenerator(Process):
             if service_time < 0:
                 raise Exception('Service time should not be less than 0')
             L = User("User %s" % user_num, sim=self.sim)
-            loss_assumption = False
-            self.sim.activate(L, L.execute(service_time, self.sim.cluster, loss_assumption), delay=0)
             user_num = user_num + 1
+            self.user_count_since_last_scale = self.user_count_since_last_scale + 1
+            self.sim.activate(L, L.execute(service_time, self.sim.cluster), delay=0)
         raise NoMoreUsersException()

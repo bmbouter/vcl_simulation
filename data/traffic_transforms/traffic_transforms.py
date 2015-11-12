@@ -19,7 +19,7 @@ def read_data():
     :rtype: list
 
     """
-    arrival_data = open('../2008_year_arrivals.txt', 'r')
+    arrival_data = open('/home/bmbouter/Documents/Research/vcl_simulation/data/2008_year_arrivals.txt', 'r')
     data = []
     for line in arrival_data:
         parsed_line  = [int(item) for item in line.rstrip().split(', ')]

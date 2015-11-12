@@ -4,7 +4,7 @@
 This is expected to be run as follows. It requires an argument which sets
 the lower bound of the cdf to 'A' and the upper bound as 'B'.
 
-    ./erlang_c_mathematica.sh 'A=48;B=55'
+    ./gamma_mathematica.sh 'A=48;B=55'
 
 *)
 

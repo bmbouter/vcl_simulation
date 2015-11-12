@@ -1,7 +1,9 @@
+from Queue import Empty
+
 from SimPy.Simulation import Process, hold
 
 from appsim.cluster import Cluster
-from appsim.feature import FeatureFlipper
+from appsim.user import User
 
 
 class NotImplementedException(Exception):
@@ -32,6 +34,7 @@ class Scale(Process):
 
         self.sim = sim
         self.scale_rate = scale_rate
+        self.n = int(300.0 / scale_rate)
         self.startup_delay_func = startup_delay_func
         self.shutdown_delay = shutdown_delay
         Process.__init__(self, name='Scaler Function', sim=self.sim)
@@ -48,15 +51,14 @@ class Scale(Process):
 
             servers_to_start, servers_to_stop = self.scaler_logic()
 
+            self.sim.user_generator.reset_user_count_since_scale()
+
             if not isinstance(servers_to_start, int):
                 raise RuntimeError('Expected servers_to_start to be an int')
             if not isinstance(servers_to_stop, int):
                 raise RuntimeError('Expected servers_to_stop to be an int')
             if servers_to_start != 0 and servers_to_stop != 0:
                 raise RuntimeError('Starting and Stopping servers does not make sense')
-
-            if FeatureFlipper.add_capacity_for_waiting_users():
-                servers_to_start = servers_to_start + len(self.sim.cluster.cluster_resource.waitQ)
 
             stopped_count = 0
 
@@ -66,7 +68,6 @@ class Scale(Process):
                     not_to_be_shut_off_list.append(new_vm)
                     #raw_input('removing server %d from shutting down state and putting back in ACTIVE' % new_vm.rank)
                     self.sim.cluster.active.append(new_vm)
-                    self.sim.cluster.add_server_to_cluster_resource_size()
                 else:
                     new_vm = self.sim.cluster.create_VM()
                     new_vm.ready_time = self.sim.now() + self.startup_delay_func()
@@ -81,7 +82,6 @@ class Scale(Process):
                 #raw_input('Server %d is now active' % s.rank)
                 self.sim.cluster.booting.remove(s)
                 self.sim.cluster.active.append(s)
-                self.sim.cluster.add_server_to_cluster_resource_size()
                 not_to_be_shut_off_list.append(s)
 
             # Look for VMs to shut off
@@ -92,7 +92,6 @@ class Scale(Process):
                     server.power_off_time = self.sim.now() + self.shutdown_delay
                     #raw_input('Server %d is empty, shutting it down. It will be powered off at %d' % (server.rank, server.power_off_time))
                     self.sim.cluster.active.remove(server)
-                    self.sim.cluster.remove_server_to_cluster_resource_size()
                     self.sim.cluster.shutting_down.append(server)
 
             self.scaling_complete(stopped_count)
@@ -110,6 +109,17 @@ class Scale(Process):
             self.sim.mClusterBooting.observe(len(self.sim.cluster.booting))  # monitor self.sim.cluster.booting
             self.sim.mClusterShuttingDown.observe(len(self.sim.cluster.shutting_down))  # monitor self.sim.cluster.shutting_down
             self.sim.mClusterOccupancy.observe(self.sim.cluster.capacity - self.sim.cluster.n)  # monitor the number of customers at this scale event
+
+            # Drain the User.waiting queue into all newly available seats
+            try:
+                open_seats = reduce(lambda x, y: x + y.n, self.sim.cluster.active, 0)
+                #print 'open_seats = %d' % open_seats
+                for i in range(open_seats):
+                    next_user = User.waiting.get_nowait()
+                    #print 'Scaling event reactivating User %d at %s' % (next_user.id, self.sim.now())
+                    self.sim.reactivate(next_user, delay=0.009) # delay so these users occurs just before new arrivals
+            except Empty:
+                pass
 
             # Wait an amount of time to allow the scale function to run periodically
             yield hold, self, self.sleep()

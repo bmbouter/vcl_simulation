@@ -52,7 +52,7 @@ def get_arrivals_per_time_period(arrivals, period_seconds):
     :return:               List of arrival counts per period
     :rtype:                list
     """
-    num_periods = (sum([arrival[0] for arrival in arrivals]) / period_seconds) + 1
+    num_periods = (31536000 / period_seconds)  # fixed at 1 year
     period_counts = [0] * num_periods
     total_seconds = 0
     for arrival in arrivals:

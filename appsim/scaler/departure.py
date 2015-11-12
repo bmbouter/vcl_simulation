@@ -1,3 +1,4 @@
+import re
 from subprocess import check_output
 
 from appsim.user import active_users
@@ -51,6 +52,24 @@ gamma_P_slots = [0.045049231818548634, 0.05066505639066426,
                  0.0001468753649138945, 0.00013686297707630172,
                  0.00012753099140142812, 0.00011883335935040933,
                  0.00011072713175561128, 0.00010317225180814708]
+
+
+gamma_synthetic_P_slots = [0.9999999599056155, 4.544428027505281e-08,
+                           2.626778814530667e-27, 2.4104744371510626e-49,
+                           1.5272980954811043e-72, 2.2230864600878693e-96,
+                           1.2736883902207908e-120, 3.831447164455917e-145,
+                           7.189139965749505e-170, 9.404323586092787e-195,
+                           9.254200297810214e-220, 7.232395623883432e-245,
+                           4.672734569037646e-270, 2.572976120842042e-295,
+                           1.2366e-320, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                           0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                           0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                           0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                           0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                           0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                           0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                           0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                           0.0, 0.0, 0.0, 0.0]
 
 
 empirical_P_slots = [0.04574924074353286, 0.030564111400693563,
@@ -115,7 +134,7 @@ class GammaDeparture(object):
             time_in_system = sim.now() - absolute_start_time
             B = time_in_system + 300
             arg_string = 'A=%f;B=%f' % (time_in_system, B)
-            raw_output = check_output(["appsim/scaler/gamma_c_mathematica.sh", arg_string])
+            raw_output = check_output(["./gamma_mathematica.sh", arg_string])
             P_depart = float(raw_output.strip())
             departure_probability_accumulator += P_depart
         return departure_probability_accumulator
@@ -137,8 +156,41 @@ class GammaDeparture(object):
         for slot_start in range(0, 28800, 300):
             slot_end = slot_start + 300
             arg_string = 'A=%f;B=%f' % (slot_start, slot_end)
-            raw_output = check_output(["appsim/scaler/gamma_c_mathematica.sh", arg_string])
+            raw_output = check_output(["./gamma_mathematica.sh", arg_string])
             P_depart = float(raw_output.strip())
+            P_slots.append(P_depart)
+        print P_slots
+
+
+class GammaAlpha24Beta5Departure(object):
+    """
+    A class for estimating the departure process as a Gamma process
+    """
+
+    @staticmethod
+    def slotted_estimate(sim):
+        departure_probability_accumulator = 0
+        for user_id, absolute_start_time in active_users.iteritems():
+            time_in_system = sim.now() - absolute_start_time
+            time_in_system = int(time_in_system)
+            slot_index = time_in_system / 300
+            P_departure = gamma_synthetic_P_slots[slot_index]
+            departure_probability_accumulator += P_departure
+        return departure_probability_accumulator
+
+    @staticmethod
+    def generate_table():
+        P_slots = []
+        for slot_start in range(0, 28800, 300):
+            slot_end = slot_start + 300
+            arg_string = 'A=%f;B=%f' % (slot_start, slot_end)
+            raw_output = check_output(["./gamma_alpha_twenty_four_beta_five_mathematica.sh", arg_string])
+            stripped_output = raw_output.strip()
+            if '`' in stripped_output:
+                stripped_output = re.sub(r"`[\d\.]+", '', stripped_output)
+            if '*^' in stripped_output:
+                stripped_output = stripped_output.replace('*^', 'e')
+            P_depart = float(stripped_output)
             P_slots.append(P_depart)
         print P_slots
 

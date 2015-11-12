@@ -5,9 +5,10 @@ import math
 
 import numpy as np
 
+from appsim.user import User
 from appsim.feature import FeatureFlipper
 from appsim.tools import weighted_choice_sub
-from scaler import Scale
+from appsim.scaler.scaler import Scale
 
 
 class ReservePolicy(Scale):
@@ -56,6 +57,9 @@ class ReservePolicy(Scale):
         # Subtract the number of estimated departing customers
         departure_cls = FeatureFlipper.departure_estimation_cls()
         reserved = self.reserved - departure_cls.slotted_estimate(self.sim)
+
+        if FeatureFlipper.add_capacity_for_waiting_users():
+            reserved = reserved + User.waiting.qsize()
 
         diff = self.sim.cluster.n - reserved
         if diff > 0:
@@ -162,6 +166,9 @@ class ARHMMReservePolicy(Scale):
         departure_cls = FeatureFlipper.departure_estimation_cls()
         reserved = reserved - departure_cls.slotted_estimate(self.sim)
 
+        if FeatureFlipper.add_capacity_for_waiting_users():
+            reserved = reserved + User.waiting.qsize()
+
         diff = self.sim.cluster.n - reserved
         if diff > 0:
             servers_to_stop = int(math.floor(float(diff) / self.sim.cluster.density))
@@ -211,11 +218,16 @@ class DataDrivenReservePolicy(Scale):
 
         The scaler selects the value of R from a data file.
         """
-        R = float(self.capacity_file.next())
+        last_arrival_count = self.sim.user_generator.get_user_count_since_scale()
+        predictor = FeatureFlipper.get_n_step_predictor()
+        R = predictor.predict_n_steps(last_arrival_count, self.n)
 
         # Subtract the number of estimated departing customers
         departure_cls = FeatureFlipper.departure_estimation_cls()
         R = R - departure_cls.slotted_estimate(self.sim)
+
+        if FeatureFlipper.add_capacity_for_waiting_users():
+            R = R + User.waiting.qsize()
 
         diff = self.sim.cluster.n - R
         if diff > 0:
@@ -298,6 +310,14 @@ class TimeVaryReservePolicy(Scale):
         self.counts_deque.append(five_min_count)
         the_list = list(self.counts_deque)
         R = np.percentile(the_list, self.arrival_percentile * 100.0)
+
+        # Subtract the number of estimated departing customers
+        departure_cls = FeatureFlipper.departure_estimation_cls()
+        R = R - departure_cls.slotted_estimate(self.sim)
+
+        if FeatureFlipper.add_capacity_for_waiting_users():
+            R = R + User.waiting.qsize()
+
         diff = self.sim.cluster.n - R
         if diff > 0:
             servers_to_stop = int(math.floor(float(diff) / self.sim.cluster.density))

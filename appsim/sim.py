@@ -1,4 +1,3 @@
-import math
 from random import seed
 
 import numpy as np
