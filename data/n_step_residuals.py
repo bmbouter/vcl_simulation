@@ -190,7 +190,7 @@ def compute_residuals(model_cls, boot_time=300):
     # loop over boot_time / n where n = [1, 2, ... , boot_time]
     for inspection_time in range(boot_time, 9, -1):
         # for inspection_time in range(boot_time, 24, -1):
-        # for inspection_time in [150]:
+        # for inspection_time in [300]:
         n = boot_time / float(inspection_time)
         if int(n) != n:
             continue
@@ -224,7 +224,7 @@ def compute_residuals(model_cls, boot_time=300):
                 if int(item) == item:
                     item = int(item)
                 predictions_file.write('%s\n' % item)
-        # print 'predictions file: %s' % predictions_file.name
+        # print 'R predictions file: %s' % predictions_file.name
 
         # with tempfile.NamedTemporaryFile(delete=False) as arrivals_file:
         #     for item in model.arrivals:

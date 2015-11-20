@@ -49,7 +49,7 @@ class DataFileGenerator(Process):
         """
         self.data_path = data_path
         self.sim = sim
-        self.user_count_since_last_scale = 0
+        self.user_count_since_last_scale = None
         Process.__init__(self, name='User Arrival Generator', sim=self.sim)
 
     def reset_user_count_since_scale(self):
