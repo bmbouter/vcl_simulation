@@ -13,7 +13,6 @@ from appsim.scaler.data_file_policy import GenericDataFileScaler
 from appsim.scaler.erlang_policy import ErlangBFormulaDataPolicy
 from tools import MonitorStatistics, SECONDS_IN_A_YEAR, WaitTimeStatistics
 from user_generators import PoissonGenerator, DataFileGenerator
-from user_generators import NoMoreUsersException
 
 
 class MMCmodel(Simulation):
@@ -71,7 +70,7 @@ class MMCmodel(Simulation):
         self.mLostServiceTimes = Monitor(sim=self)
 
     def finalize_simulation(self):
-        if self.now() >= SECONDS_IN_A_YEAR:
+        if self.now() > SECONDS_IN_A_YEAR:
             raise Exception(
                 'Finalizing simulation after %s seconds is incorrect!' % SECONDS_IN_A_YEAR)
         self._adjust_mAcceptServiceTimes()
@@ -145,10 +144,7 @@ class MMCmodel(Simulation):
         """Runs an MMCmodel simulation"""
         self.activate(self.scaler, self.scaler.execute())
         self.activate(self.user_generator, self.user_generator.execute())
-        try:
-            self.simulate(until=10**30)
-        except NoMoreUsersException:
-            self.stopSimulation()
+        self.simulate(until=SECONDS_IN_A_YEAR)
         self.finalize_simulation()
         return_dict = {}
         # compute batch means bp and number of servers

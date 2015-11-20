@@ -5,8 +5,6 @@ from SimPy.SimulationTrace import * ## Only change in program!
 
 from user import User
 
-class NoMoreUsersException(Exception):
-    pass
 
 class PoissonGenerator(Process):
     """Generates Users at a Poisson rate of lamda"""
@@ -35,7 +33,7 @@ class PoissonGenerator(Process):
             yield hold,self,expovariate(self.lamda)
             L = User("User %s" % i, sim=self.sim)
             self.sim.activate(L, L.execute(expovariate(self.mu), self.sim.cluster), delay=0)
-        raise NoMoreUsersException()
+
 
 class DataFileGenerator(Process):
     """Generates Users according a Data file"""
@@ -87,4 +85,3 @@ class DataFileGenerator(Process):
             user_num = user_num + 1
             self.user_count_since_last_scale = self.user_count_since_last_scale + 1
             self.sim.activate(L, L.execute(service_time, self.sim.cluster), delay=0)
-        raise NoMoreUsersException()
