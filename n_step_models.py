@@ -78,10 +78,9 @@ class AbstractModel(object):
         :rtype: dict
         """
         residuals = {}
-        predictions = self._get_predictions(**kwargs)
-        self.cleaned_predictions = self.clean(predictions)
-        assert len(predictions)  == len(self.arrivals)
-        assert len(self.cleaned_predictions) == len(self.arrivals)
+        self.predictions = self._get_predictions(**kwargs)
+        del self.predictions[-1]
+        assert len(self.predictions)  == len(self.arrivals)
         assert sum(self.arrivals) == 175481
         #print 'inspection_time=%s   n=%s, k=%s' % (inspection_time, n, k)
         residuals['simple'] = self.simple_residual()
@@ -92,14 +91,19 @@ class AbstractModel(object):
         #print 'sliding window:  over_sum=%(overestimate_sum)s,  under_sum=%(underestimate_sum)s,  sse=%(sse)s\n' % residual_dict
         return residuals
 
-    def _get_predictions(self, *args, **kwargs):
+    def _get_predictions(self, **param_dict):
         """
         Return the arrival count predictions for time slots 300 / n seconds long.
 
         :return:  A list of predictions
         :rtype: list of float or integers
         """
-        raise NotImplementedError
+        predictions = []
+        predictor = self.predictor_cls(param_dict)
+        predictions.append(predictor.predict_n_steps(None, self.n))
+        for arrival in self.arrivals:
+            predictions.append(predictor.predict_n_steps(arrival, self.n))
+        return predictions
 
     def _get_training_iterator(self):
         """
@@ -113,35 +117,16 @@ class AbstractModel(object):
         """
         raise NotImplementedError
 
-    def clean(self, data):
-        """
-        Cleans the data passed in and returns it.
-
-        :returns: a list of cleaned data
-        :rtype: list
-        """
-        prediction_list = list(data)
-
-        # shift the predictions by 1
-        prediction_list.insert(0, 0)
-        del prediction_list[-1]
-
-        # replace NA values with 0
-        for i, item in enumerate(prediction_list):
-            if isinstance(item, NARealType):
-                prediction_list[i] = 0
-        return prediction_list
-
     def get_first_half_year_arrivals_and_pred(self):
         """
         Return the first half of arrival and cleaned predictions
 
-        :returns: A tuple of (self.arrivals, self.cleaned_predictions) where each attribute is only the first half of
+        :returns: A tuple of (self.arrivals, self.predictions) where each attribute is only the first half of
                   the data.
         :rtype: (list, list)
         """
         arrivals = self.arrivals[:(len(self.arrivals) / 2)]
-        pred = self.cleaned_predictions[:(len(self.cleaned_predictions) / 2)]
+        pred = self.predictions[:(len(self.predictions) / 2)]
         return (arrivals, pred)
 
     def _compute_residual(self, pred, arrivals):
@@ -155,6 +140,8 @@ class AbstractModel(object):
 
     def simple_residual(self):
         arrivals, pred = self.get_first_half_year_arrivals_and_pred()
+        for i in range(len(pred)):
+            pred[i] = math.ceil(pred[i])
         return self._compute_residual(pred, arrivals)
 
     def n_step_residual_non_overlapping(self):
@@ -166,8 +153,8 @@ class AbstractModel(object):
         for i in range(len(arrivals)):
             if i % n == 0:
                 index = index + 1
-            pred_summed[index] = pred_summed[index] + pred[i]
             arrivals_summed[index] = arrivals_summed[index] + arrivals[i]
+            pred_summed[index] = math.ceil(pred_summed[index] + pred[i])
         return self._compute_residual(pred_summed, arrivals_summed)
 
     def n_step_residual_sliding(self):
@@ -177,11 +164,14 @@ class AbstractModel(object):
         n = (len(arrivals) / 52560)
         for i in range(len(arrivals)):
             arrivals_summed.append(sum(arrivals[i:n+i]))
-            pred_summed.append(sum(pred[i:n+i]) / float(n))
+            pred_summed.append(math.ceil(sum(pred[i:n+i]) / float(n)))
+            #pred_summed.append(math.ceil(sum(pred[i:n+i])))
         return self._compute_residual(pred_summed, arrivals_summed)
 
 
 class MovingAverageModel(AbstractModel):
+
+    predictor_cls = MovingAverageNStepPredictor
 
     def __init__(self, n, arrivals, param_min=None):
         if param_min is None:
@@ -201,6 +191,8 @@ class MovingAverageModel(AbstractModel):
 
 
 class ExponentialMovingAverageModel(AbstractModel):
+
+    predictor_cls = ExponentialMovingAverageNStepPredictor
 
     def __init__(self, n, arrivals, param_min=None):
         if param_min is None:
@@ -222,6 +214,8 @@ class ExponentialMovingAverageModel(AbstractModel):
 
 class AutoregressiveModel(AbstractModel):
 
+    predictor_cls = AutoregressiveNStepPredictor
+
     def __init__(self, n, arrivals, **kwargs):
         super(AutoregressiveModel, self).__init__(n, arrivals)
 
@@ -233,6 +227,8 @@ class AutoregressiveModel(AbstractModel):
 
 
 class ReserveModel(AbstractModel):
+
+    predictor_cls = ReserveNStepPredictor
 
     def __init__(self, n, arrivals, param_min=None):
         if param_min is None:
@@ -283,8 +279,8 @@ class AbstractResidualCalculator(object):
         residuals_header = 'inspection_time, simple_min_%s, simple_min_value, non_overlap_min_%s, non_overlap_min_value, sliding_window_min_%s, sliding_window_min_value' % (self.param_key, self.param_key, self.param_key)
         residuals_file.write(residuals_header + '\n')
 
-        # for inspection_time in range(boot_time, 24, -1):
-        for inspection_time in [75]:
+        # for inspection_time in [300]:
+        for inspection_time in range(boot_time, 24, -1):
             n = boot_time / float(inspection_time)
             if int(n) != n:
                 continue
@@ -319,7 +315,7 @@ class AbstractResidualCalculator(object):
             model_min = model.train()
 
             with tempfile.NamedTemporaryFile(delete=False) as predictions_file:
-                for item in model.cleaned_predictions:
+                for item in model.predictions:
                     if int(item) == item:
                         item = int(item)
                     predictions_file.write('%s\n' % item)
