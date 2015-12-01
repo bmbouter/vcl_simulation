@@ -7,7 +7,6 @@ import tempfile
 
 import matplotlib.pyplot as plt
 import rpy2.robjects as robjects
-from rpy2.rinterface import NARealType
 
 from appsim.sim import DataDrivenReservePolicySim
 from appsim.feature import FeatureFlipper
@@ -163,7 +162,8 @@ class AbstractModel(object):
         arrivals_summed = []
         n = (len(arrivals) / 52560)
         for i in range(len(arrivals)):
-            arrivals_summed.append(sum(arrivals[i:n+i]))
+            arrivals_summed.append(sum(arrivals[i:n+i]) / float(n))
+            #arrivals_summed.append(sum(arrivals[i:n+i]))
             pred_summed.append(math.ceil(sum(pred[i:n+i]) / float(n)))
             #pred_summed.append(math.ceil(sum(pred[i:n+i])))
         return self._compute_residual(pred_summed, arrivals_summed)
@@ -184,11 +184,6 @@ class MovingAverageModel(AbstractModel):
         for k in self.k_range:
             yield {'k': k}
 
-    # def _get_predictions(self, k):
-    #     robjects.r.library('TTR')
-    #     int_vector_arrivals = robjects.IntVector(self.arrivals)
-    #     return robjects.r['SMA'](int_vector_arrivals, n=k)
-
 
 class ExponentialMovingAverageModel(AbstractModel):
 
@@ -206,11 +201,6 @@ class ExponentialMovingAverageModel(AbstractModel):
         for alpha in self.alpha_range:
             yield {'alpha': alpha}
 
-    # def _get_predictions(self, alpha):
-    #     robjects.r.library('TTR')
-    #     int_vector_arrivals = robjects.IntVector(self.arrivals)
-    #     return robjects.r['EMA'](int_vector_arrivals, ratio=alpha)
-
 
 class AutoregressiveModel(AbstractModel):
 
@@ -220,10 +210,10 @@ class AutoregressiveModel(AbstractModel):
         super(AutoregressiveModel, self).__init__(n, arrivals)
 
     def _get_training_iterator(self):
-        yield {'coeff': [0.3435, 0.4258]}
-
-    # def _get_predictions(self, coeff):
-    #     return [0] * len(self.arrivals)
+        int_vector_arrivals = robjects.IntVector(self.arrivals)
+        ar_training_results =  robjects.r['ar'](int_vector_arrivals, order_max=2)
+        ar_trained_coeff = ar_training_results[1]
+        yield {'coeff': [ar_trained_coeff[1], ar_trained_coeff[0]]}
 
 
 class ReserveModel(AbstractModel):
@@ -240,9 +230,6 @@ class ReserveModel(AbstractModel):
     def _get_training_iterator(self):
         for R in self.R_range:
             yield {'R': R}
-
-    # def _get_predictions(self, R):
-    #     return [R] * len(self.arrivals)
 
 
 class AbstractResidualCalculator(object):
@@ -280,7 +267,7 @@ class AbstractResidualCalculator(object):
         residuals_file.write(residuals_header + '\n')
 
         # for inspection_time in [300]:
-        for inspection_time in range(boot_time, 24, -1):
+        for inspection_time in range(boot_time, 19, -1):
             n = boot_time / float(inspection_time)
             if int(n) != n:
                 continue
@@ -290,9 +277,15 @@ class AbstractResidualCalculator(object):
             clean_arrivals = get_clean_arrivals()
             arrivals_per_period = get_arrivals_per_time_period(clean_arrivals, inspection_time)
 
-            # train model for inspection_time
-            # estimate arrivals based on trained model
             model = self.model_cls(n, arrivals_per_period)
+
+            # force these values
+            #param_min = {'k': 12}
+            #param_min = {'alpha': 0.13}
+            #param_min = {'coeff': [0.3344981649982885, 0.4095322760489233]}
+            #param_min = {'R': 2.0}
+            #model = self.model_cls(n, arrivals_per_period, param_min=param_min)
+
             model_min = model.train()
 
             print 'inspection_time=%s, simple_min: %s=%s, non_overlap_min: %s=%s, sliding_window_min: %s=%s' % (
@@ -442,7 +435,7 @@ if __name__ == "__main__":
         print 'Please run in the same directory as n_step_models.py'
         exit()
 
-    MovingAverageResidualCalculator().compute_residuals()
+    #MovingAverageResidualCalculator().compute_residuals()
     #ExponentialMovingAverageResidualCalculator().compute_residuals()
-    #AutoregressiveResidualCalculator().compute_residuals()
+    AutoregressiveResidualCalculator().compute_residuals()
     #ReserveResidualCalculator().compute_residuals()
