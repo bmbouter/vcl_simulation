@@ -162,10 +162,8 @@ class AbstractModel(object):
         arrivals_summed = []
         n = (len(arrivals) / 52560)
         for i in range(len(arrivals)):
-            arrivals_summed.append(sum(arrivals[i:n+i]) / float(n))
-            #arrivals_summed.append(sum(arrivals[i:n+i]))
-            pred_summed.append(math.ceil(sum(pred[i:n+i]) / float(n)))
-            #pred_summed.append(math.ceil(sum(pred[i:n+i])))
+            arrivals_summed.append(sum(arrivals[i:n+i]))
+            pred_summed.append(math.ceil(sum(pred[i:n+i])))
         return self._compute_residual(pred_summed, arrivals_summed)
 
 
@@ -213,7 +211,7 @@ class AutoregressiveModel(AbstractModel):
         int_vector_arrivals = robjects.IntVector(self.arrivals)
         ar_training_results =  robjects.r['ar'](int_vector_arrivals, order_max=2)
         ar_trained_coeff = ar_training_results[1]
-        yield {'coeff': [ar_trained_coeff[1], ar_trained_coeff[0]]}
+        yield {'coeff': [round(ar_trained_coeff[1], 4), round(ar_trained_coeff[0], 4)]}
 
 
 class ReserveModel(AbstractModel):
@@ -266,7 +264,6 @@ class AbstractResidualCalculator(object):
         residuals_header = 'inspection_time, simple_min_%s, simple_min_value, non_overlap_min_%s, non_overlap_min_value, sliding_window_min_%s, sliding_window_min_value' % (self.param_key, self.param_key, self.param_key)
         residuals_file.write(residuals_header + '\n')
 
-        # for inspection_time in [300]:
         for inspection_time in range(boot_time, 19, -1):
             n = boot_time / float(inspection_time)
             if int(n) != n:
@@ -282,7 +279,7 @@ class AbstractResidualCalculator(object):
             # force these values
             #param_min = {'k': 12}
             #param_min = {'alpha': 0.13}
-            #param_min = {'coeff': [0.3344981649982885, 0.4095322760489233]}
+            #param_min = {'coeff': [0.3345, 0.4095]}
             #param_min = {'R': 2.0}
             #model = self.model_cls(n, arrivals_per_period, param_min=param_min)
 
@@ -437,5 +434,5 @@ if __name__ == "__main__":
 
     #MovingAverageResidualCalculator().compute_residuals()
     #ExponentialMovingAverageResidualCalculator().compute_residuals()
-    AutoregressiveResidualCalculator().compute_residuals()
+    #AutoregressiveResidualCalculator().compute_residuals()
     #ReserveResidualCalculator().compute_residuals()
