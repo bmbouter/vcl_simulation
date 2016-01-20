@@ -174,6 +174,7 @@ class MovingAverageModel(AbstractModel):
     def __init__(self, n, arrivals, param_min=None):
         if param_min is None:
             self.k_range = range(1, 51)
+            # self.k_range = range(1, 101)
         else:
             self.k_range = [param_min['k']]
         super(MovingAverageModel, self).__init__(n, arrivals)
@@ -191,6 +192,7 @@ class ExponentialMovingAverageModel(AbstractModel):
         if param_min is None:
             # self.alpha_range = [round(0.01 * ((2 * i) + 1), 2) for i in range(50)]
             self.alpha_range = [round(0.01 * (i+1), 2) for i in range(100)]
+            # self.alpha_range = [round(0.001 * (i+1), 3) for i in range(200)]
         else:
             self.alpha_range = [param_min['alpha']]
         super(ExponentialMovingAverageModel, self).__init__(n, arrivals)
@@ -221,6 +223,7 @@ class ReserveModel(AbstractModel):
     def __init__(self, n, arrivals, param_min=None):
         if param_min is None:
             self.R_range = [round(0.05 * (i+1), 2) for i in range(70)]
+            # self.R_range = [round(0.01 + (0.01 * i), 2) for i in range(70)]
         else:
             self.R_range = [param_min['R']]
         super(ReserveModel, self).__init__(n, arrivals)
@@ -233,6 +236,8 @@ class ReserveModel(AbstractModel):
 class AbstractResidualCalculator(object):
 
     base_path = '/home/bmbouter/Documents/Research/vcl_simulation/data/n_step_images/'
+    label_rotation = 'horizontal'
+    xytext = (5, -3)
 
     def _get_param_values_tuple(self):
         raise NotImplementedError()
@@ -264,7 +269,7 @@ class AbstractResidualCalculator(object):
         residuals_header = 'inspection_time, simple_min_%s, simple_min_value, non_overlap_min_%s, non_overlap_min_value, sliding_window_min_%s, sliding_window_min_value' % (self.param_key, self.param_key, self.param_key)
         residuals_file.write(residuals_header + '\n')
 
-        for inspection_time in range(boot_time, 19, -1):
+        for inspection_time in range(boot_time, 9, -1):
             n = boot_time / float(inspection_time)
             if int(n) != n:
                 continue
@@ -353,12 +358,18 @@ class AbstractResidualCalculator(object):
         self.make_plot(points_inspection_time, points_mean, 'Inspection Time', 'Wait Time Mean', 'wait_time_mean', point_labels)
         self.make_plot(points_inspection_time, points_utilization, 'Inspection Time', 'Utilization Mean', 'utilization_mean', point_labels)
 
+        # make point labels
+        point_labels = ['%s=%s, PR=%s' % (self.param_key, data[0][self.param_key], data[1]) for data in zip(param_values, points_inspection_time)]
+        hour_labels = map(self.hour_labels_filter, point_labels)
+        day_labels = map(self.day_labels_filter, point_labels)
+        week_labels = map(self.week_labels_filter, point_labels)
+        mean_labels = map(self.mean_labels_filter, point_labels)
+
         # pareto plots
-        point_labels = ['%s=%s, IT=%s' % (self.param_key, data[0][self.param_key], data[1]) for data in zip(param_values, points_inspection_time)]
-        self.make_plot(points_hour_99, points_utilization, 'Wait Time 99th Percentile per Hour', 'Mean Utilization', 'pareto_wait_time_hourly_99th', point_labels)
-        self.make_plot(points_day_99, points_utilization, 'Wait Time 99th Percentile per Day', 'Mean Utilization', 'pareto_wait_time_daily_99th', point_labels)
-        self.make_plot(points_week_99, points_utilization, 'Wait Time 99th Percentile per Week', 'Mean Utilization', 'pareto_wait_time_weekly_99th', point_labels)
-        self.make_plot(points_mean, points_utilization, 'Wait Time Mean', 'Mean Utilization', 'pareto_wait_time_mean', point_labels)
+        self.make_plot(points_hour_99, points_utilization, 'Wait Time 99th Percentile per Hour', 'Mean Utilization', 'pareto_wait_time_hourly_99th', hour_labels)
+        self.make_plot(points_day_99, points_utilization, 'Wait Time 99th Percentile per Day', 'Mean Utilization', 'pareto_wait_time_daily_99th', day_labels)
+        self.make_plot(points_week_99, points_utilization, 'Wait Time 99th Percentile per Week', 'Mean Utilization', 'pareto_wait_time_weekly_99th', week_labels)
+        self.make_plot(points_mean, points_utilization, 'Wait Time Mean', 'Mean Utilization', 'pareto_wait_time_mean', mean_labels)
 
     def _simulate(self, predictions_filename, inspection_time):
             reserve = DataDrivenReservePolicySim()
@@ -382,13 +393,31 @@ class AbstractResidualCalculator(object):
         fig = plt.figure()
         ax = fig.add_subplot(111)
         plt.plot(x, y, 'ro')
-        plt.title('%s vs %s' % (y_label, x_label))
         plt.xlabel(x_label)
         plt.ylabel(y_label)
         for i, label in enumerate(point_labels):
-            ax.annotate(label, xy=(x[i], y[i]))
+            ax.annotate(label, xy=(x[i], y[i]), size=10, rotation=self.label_rotation, xytext=self.xytext, textcoords='offset points')
         plt.savefig(filename)
         plt.close()
+
+    def hour_labels_filter(self, label):
+        return label
+
+    def day_labels_filter(self, label):
+        return label
+
+    def week_labels_filter(self, label):
+        return label
+
+    def mean_labels_filter(self, label):
+        return label
+
+    def _PR_string_filter(self, PR_values_to_filter, label):
+        for PR in PR_values_to_filter:
+            PR_string = 'PR=%s' % PR
+            if label.endswith(PR_string):
+                return ''
+        return label
 
 
 class MovingAverageResidualCalculator(AbstractResidualCalculator):
@@ -407,6 +436,20 @@ class ExponentialMovingAverageResidualCalculator(AbstractResidualCalculator):
     model_cls = ExponentialMovingAverageModel
     predictor_cls = ExponentialMovingAverageNStepPredictor
     param_key = 'alpha'
+    label_rotation = 270
+    xytext = (-6, -12)
+
+    def hour_labels_filter(self, item):
+        return self._PR_string_filter([300, 25, 12, 10], item)
+
+    def day_labels_filter(self, item):
+        return self._PR_string_filter([300, 60, 15, 12, 10], item)
+
+    def week_labels_filter(self, item):
+        return self._PR_string_filter([300, 12, 10], item)
+
+    def mean_labels_filter(self, item):
+        return self._PR_string_filter([300, 12, 10], item)
 
 
 class AutoregressiveResidualCalculator(AbstractResidualCalculator):
@@ -417,6 +460,18 @@ class AutoregressiveResidualCalculator(AbstractResidualCalculator):
     predictor_cls = AutoregressiveNStepPredictor
     param_key = 'coeff'
 
+    def hour_labels_filter(self, item):
+        return self._PR_string_filter([300, 25, 20, 15, 12, 10], item)
+
+    def day_labels_filter(self, item):
+        return self._PR_string_filter([300, 25, 20, 15, 12, 10], item)
+
+    def week_labels_filter(self, item):
+        return self._PR_string_filter([300, 25, 20, 15, 12, 10], item)
+
+    def mean_labels_filter(self, item):
+        return self._PR_string_filter([30, 25, 20, 15, 12, 10], item)
+
 
 class ReserveResidualCalculator(AbstractResidualCalculator):
 
@@ -425,6 +480,20 @@ class ReserveResidualCalculator(AbstractResidualCalculator):
     model_cls = ReserveModel
     predictor_cls = ReserveNStepPredictor
     param_key = 'R'
+    label_rotation = 270
+    xytext = (-6, -12)
+
+    def hour_labels_filter(self, item):
+        return self._PR_string_filter([300, 30, 25, 10], item)
+
+    def day_labels_filter(self, item):
+        return self._PR_string_filter([300, 30, 25, 20, 10], item)
+
+    def week_labels_filter(self, item):
+        return self._PR_string_filter([300, 60, 25, 20, 10], item)
+
+    def mean_labels_filter(self, item):
+        return self._PR_string_filter([300, 30, 20, 10], item)
 
 
 if __name__ == "__main__":
