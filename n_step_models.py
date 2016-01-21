@@ -207,9 +207,13 @@ class AutoregressiveModel(AbstractModel):
     predictor_cls = AutoregressiveNStepPredictor
 
     def __init__(self, n, arrivals, **kwargs):
+        self.param_min = kwargs.get('param_min', None)
         super(AutoregressiveModel, self).__init__(n, arrivals)
 
     def _get_training_iterator(self):
+        if self.param_min is not None:
+            yield self.param_min
+            return
         int_vector_arrivals = robjects.IntVector(self.arrivals)
         ar_training_results =  robjects.r['ar'](int_vector_arrivals, order_max=2)
         ar_trained_coeff = ar_training_results[1]
