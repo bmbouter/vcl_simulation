@@ -63,3 +63,12 @@ data/traffic_transforms/*.txt
 # PyCharm directory format
 .idea/
 
+# R data files
+.RData
+.Rhistory
+
+# output image files
+data/n_step_images/
+
+# output data files
+data/erlang_c_memo_data/
