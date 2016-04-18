@@ -6,12 +6,16 @@ import os
 import matplotlib.pyplot as plt
 
 
-MAX_CUSTOMERS = 25  # 3
-MAX_SERVERS = 26  # 4
+MAX_CUSTOMERS = 16
+MAX_SERVERS = 17
 R = 1
 
-LAMBDA = 2
-MU = 3
+PERIOD_LENGTH = 300
+
+# LAMBDA = 1.0 / (8926.32 * 16)  # for system 4, 5 with R = 1
+
+LAMBDA = 1.0 / (8926.32 / 2)
+MU = 1.0 / 19861.04
 
 BASE_PATH = '/home/bmbouter/Documents/Research/matlab/'
 
@@ -30,43 +34,22 @@ class Evaluator(object):
 
         :return: The probability of count arrivals occurring.
         """
-        return cls._compute(count, cls.arrival_memo, LAMBDA)
+        # From equation 2.121 on page 60
+        return math.pow((LAMBDA * PERIOD_LENGTH), count) / math.factorial(count) * math.exp(-LAMBDA * PERIOD_LENGTH)
 
     @classmethod
-    def departures(cls, count):
+    def departures(cls, count, num_customers_in_service):
         """
         Numerically evaluate the probability of 'count' departures occurring.
 
         :param count: The number of departures which would occur
+        :param num_customers_in_service: the number of customers who are in service
 
         :return: The probability of count departures occurring.
         """
-        return cls._compute(count, cls.departure_memo, MU)
-
-    @classmethod
-    def _compute(cls, count, memo, lambda_or_mu):
-        """
-        Numerically evaluate the probability of 'count' arrival or departure events occurring.
-
-        This method uses memoization and recursion.
-
-        :param count: The number of arrivals or departures which would occur
-        :param memo: The memoization dictionary which is keyed on 'count'
-        :param lambda_or_mu: The lambda or mu value to be used in the computation
-
-        :return: The probability of count arrivals or departures occurring
-        """
-        if count in memo:
-            return memo[count]
-
-        if count == 0:
-            to_return = math.exp(-lambda_or_mu)
-        else:
-            P_one_arrival_or_departure = cls._compute(0, memo, lambda_or_mu)
-            to_return = pow(1 - P_one_arrival_or_departure, count)
-
-        memo[count] = to_return
-        return to_return
+        # Also using equation 2.121 but with a scaled Mu for the number of in-service customers
+        scaled_mu = num_customers_in_service * MU
+        return math.pow((scaled_mu * PERIOD_LENGTH), count) / math.factorial(count) * math.exp(-scaled_mu * PERIOD_LENGTH)
 
 
 class State(object):
@@ -151,9 +134,9 @@ class TableMaker(object):
         self.f_symbolic.write(data)
         self.f_numeric.write(data)
 
-    def write_non_zero_value(self, arrivals=0, departures=0):
+    def write_non_zero_value(self, arrivals=0, departures=0, num_customers_in_service=0):
         #self.f_symbolic.write('a(%s)d(%s),' % (arrivals, departures))
-        value = Evaluator.arrivals(arrivals) * Evaluator.departures(departures)
+        value = Evaluator.arrivals(arrivals) * Evaluator.departures(departures, num_customers_in_service)
         #self.f_numeric.write('%s,' % value)
         self.row_data.append(value)
 
@@ -171,15 +154,19 @@ class TableMaker(object):
                 self.write_zero()
                 continue
             change_in_n = next.n - current.n
+            if current.n >= current.s:
+                in_service = current.s
+            else:
+                in_service = current.n
             if change_in_n > 0:
                 # more arrivals than departures
-                self.write_non_zero_value(arrivals=change_in_n, departures=0)
+                self.write_non_zero_value(arrivals=change_in_n, departures=0, num_customers_in_service=in_service)
             elif change_in_n == 0:
                 # equal num of arrivals and departures
-                self.write_non_zero_value(arrivals=0, departures=0)
+                self.write_non_zero_value(arrivals=0, departures=0, num_customers_in_service=in_service)
             else:
                 # more departures than arrivals
-                self.write_non_zero_value(arrivals=0, departures=abs(change_in_n))
+                self.write_non_zero_value(arrivals=0, departures=abs(change_in_n), num_customers_in_service=in_service)
         self.write_string('\n')
         self.data.append(self.row_data)
 
@@ -193,21 +180,62 @@ class SumOutputs(object):
 
     @classmethod
     def run(cls, filepath):
-        n_sum = defaultdict(float)
-        s_sum = defaultdict(float)
-        q_sum = defaultdict(float)
+        data = []
         with open(filepath, 'r') as f_ans:
             for line, state in zip(f_ans, State.all()):
                 ans = float(line.strip())
-                n_sum[state.n] += ans
-                s_sum[state.s] += ans
-                q_sum[state.q] += ans
+                data.append((state, ans))
+        cls.sum_outputs(data)
+        cls.prob_busy(data)
+        cls.waiting_time(data)
+        cls.utiliation(data)
+
+    @classmethod
+    def prob_busy(cls, data):
+        prob_sum = 0
+        for state, prob in filter(lambda s: s[0].n >= s[0].s, data):
+            prob_sum += prob
+        print 'P(busy) = %s\n' % prob_sum
+
+    @classmethod
+    def waiting_time(cls, data):
+        departures_needed = defaultdict(int)
+        for state, prob in filter(lambda s: s[0].n > s[0].s, data):
+            departures_needed[state.n] += prob
+        cls.plot_and_save(departures_needed, 'departures_needed.png')
+        expected_waiting_time = 0
+        mean_service_time = 1.0 / MU
+        for key, prob in departures_needed.iteritems():
+            expected_waiting_time += key * mean_service_time * prob
+        print 'Expected Waiting Time = %s\n' % expected_waiting_time
+
+    @classmethod
+    def utiliation(cls, data):
+        unused_servers = []
+        for state, prob in data:
+            unused_servers.append(max(state.s - state.n, 0) * prob)
+        print 'Average Unused Servers = %s\n' % sum(unused_servers)
+
+    @classmethod
+    def sum_outputs(cls, data):
+        n_sum = defaultdict(float)
+        s_sum = defaultdict(float)
+        q_sum = defaultdict(float)
+        for state, prob in data:
+            n_sum[state.n] += prob
+            s_sum[state.s] += prob
+            q_sum[state.q] += prob
         cls.plot_and_save(n_sum, 'n_sum.png')
         cls.plot_and_save(s_sum, 's_sum.png')
         cls.plot_and_save(q_sum, 'q_sum.png')
+        simulation_n_marginals = [0.01158827785611152, 0.05140067515207855, 0.11425892042257983, 0.17162040113767102, 0.1896135483992488, 0.16897409266094127, 0.12613087402380632, 0.08127186429378533, 0.04581734288102304, 0.022596266629325224, 0.010361299398535122, 0.0041036902390239275, 0.0015167424815938962, 0.0005047563727632472, 0.00017770164046772443, 5.041855966161346e-05, 1.312785138358992e-05]
+        n_sum_list = [n_sum[i] for i in range(17)]
+        residuals = [numeric - sim for sim, numeric in zip(simulation_n_marginals, n_sum_list)]
+        print '\nn residuals = %s\n' % residuals
 
     @classmethod
     def plot_and_save(cls, data, filename):
+        print '%s: %s' % (filename, data)
         x_value = []
         y_value = []
         for k, v in data.iteritems():
@@ -223,8 +251,9 @@ if __name__ == "__main__":
         print 'Please run in the same directory as markov_example_generator.py'
         exit()
     startTime = datetime.now()
-    #TableMaker().run()
-    SumOutputs.run(BASE_PATH + 'markov_sparse_17576.txt')
+    # TableMaker().run()
+    # SumOutputs.run(BASE_PATH + 'markov_sparse_125.txt')
+    SumOutputs.run(BASE_PATH + 'markov_sparse_4913.txt')
     d = datetime.now() - startTime
     time_in_seconds = d.days * 60 * 60 * 24 + d.seconds + d.microseconds / 1e6
     num_states = len([c for c in State.all()])
