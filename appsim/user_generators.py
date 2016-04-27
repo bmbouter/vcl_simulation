@@ -101,7 +101,6 @@ class PoissonGenerator(GenericGenerator):
         """
         self.lamda = lamda
         self.mu = mu
-        self.regenerate_service_time_count = 0
         super(PoissonGenerator, self).__init__(sim=sim)
 
     def execute(self):
@@ -115,9 +114,6 @@ class PoissonGenerator(GenericGenerator):
             service_time = expovariate(self.mu)
             if service_time < 0:
                 raise Exception('Service time should not be less than 0')
-            while service_time <= self.get_time_since_last_scale_event():
-                self.regenerate_service_time_count += 1
-                service_time = expovariate(self.mu)
             self.user_count_since_last_scale = self.user_count_since_last_scale + 1
             self.sim.activate(L, L.execute(service_time, self.sim.cluster), delay=0)
 
