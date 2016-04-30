@@ -1,13 +1,17 @@
+from collections import namedtuple
 from Queue import Empty
 
 from SimPy.Simulation import Process, hold
 
 from appsim.cluster import Cluster
-from appsim.user import User
+from appsim.user import User, active_users
 
 
 class NotImplementedException(Exception):
     pass
+
+
+State = namedtuple('State', ['n', 's', 'q'])
 
 
 class Scale(Process):
@@ -51,7 +55,7 @@ class Scale(Process):
 
             servers_to_start, servers_to_stop = self.scaler_logic()
 
-            self.sim.user_generator.reset_user_count_since_scale()
+            self.sim.user_generator.reset_scale_counters()
 
             if not isinstance(servers_to_start, int):
                 raise RuntimeError('Expected servers_to_start to be an int')
@@ -76,7 +80,7 @@ class Scale(Process):
                     Cluster.total_prov += 1
                     #raw_input('server %s booting. It will be READY AT %s' % (new_vm.rank, new_vm.ready_time))
 
-            ready_to_be_active = [ elem for elem in self.sim.cluster.booting if self.sim.now() >= elem.ready_time ]
+            ready_to_be_active = [elem for elem in self.sim.cluster.booting if self.sim.now() >= elem.ready_time]
 
             for s in ready_to_be_active:
                 #raw_input('Server %d is now active' % s.rank)
@@ -137,11 +141,14 @@ class Scale(Process):
 
     def scaling_complete(self, stopped_count):
         """A callback function which is called after scaling is complete with
-        the number of servers stopped. If a scaler policy does not override
-        this funciton it does nothing.
+        the number of servers stopped.
 
         """
-        pass
+        total_system_users = User.waiting.qsize() + len(active_users)
+        active_servers = len(self.sim.cluster.active)
+        shutting_down_servers = len(self.sim.cluster.shutting_down)
+        current_state = State(n=total_system_users, s=active_servers, q=shutting_down_servers)
+        self.sim.mSystemState.observe(current_state)
 
     def scaler_logic(self):
         """This is where scaler_logic not common to all scalers is stored. This
