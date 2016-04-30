@@ -11,8 +11,15 @@ from appsim.scaler.reserve_policy import (ARHMMReservePolicy,
 from appsim.scaler.fixed_size_policy import FixedSizePolicy
 from appsim.scaler.data_file_policy import GenericDataFileScaler
 from appsim.scaler.erlang_policy import ErlangBFormulaDataPolicy
-from tools import MonitorStatistics, SECONDS_IN_A_YEAR, WaitTimeStatistics
+from appsim.scaler.scaler import State
+from appsim.user import User
+from tools import MonitorStatistics, pairs, SECONDS_IN_A_YEAR, WaitTimeStatistics
 from user_generators import PoissonGenerator, DataFileGenerator
+
+
+MAX_Q = None  # [0, MAX_Q - 1] due to range(MAX_Q)
+SECONDS_IN_A_YEAR = SECONDS_IN_A_YEAR * 1  # a hack to get more simulation time
+BASE_PATH = '/home/bmbouter/Documents/Research/matlab/'
 
 
 class MMCmodel(Simulation):
@@ -55,6 +62,7 @@ class MMCmodel(Simulation):
         self.mClusterBooting = Monitor(sim=self)  # monitor cluster.booting
         self.mClusterShuttingDown = Monitor(sim=self)  # cluster.shutting_down
         self.mClusterOccupancy = Monitor(sim=self)  # utilized seats
+        self.mSystemState = Monitor(sim=self)  # system state records (n, s, q) at time t
         ### Wait Time Monitors
         self.mWaitTime = Monitor(sim=self) # wait time of each customer
         ### Customer Monitors
@@ -140,12 +148,81 @@ class MMCmodel(Simulation):
         used_seat_time = sum([data[1] for data in self.mAcceptServiceTimes])
         return used_seat_time / total_seat_time
 
+    def generate_matrix_and_exit(self):
+        #percent_service_time_regen = (self.user_generator.regenerate_service_time_count / float(User.user_count)) * 100
+        #print '%0.2f percent service times were regenerated' % percent_service_time_regen
+
+        max_customers = max(self.mSystemState, key=lambda s: s[1].n)[1].n
+        print 'max number of customers in system = %s' % max_customers
+
+        hist = []
+        for cust_count in range(max_customers + 1):
+            cust_per_state = len(filter(lambda s: s[1].n == cust_count, self.mSystemState))
+            hist.append(cust_per_state)
+        print 'customer counts in system (sorted) = %s' % hist
+        print 'customer probabilities in system (sorted) = %s' % [count / float(sum(hist)) for count in hist]
+
+        max_servers = max(self.mSystemState, key=lambda s: s[1].s)[1].s
+        print 'max number of servers in system = %s' % max_servers
+
+        server_hist = []
+        for server_count in range(max_servers + 1):
+            servers_per_state = len(filter(lambda s: s[1].s == server_count, self.mSystemState))
+            server_hist.append(servers_per_state)
+        print 'server count in system (sorted) = %s' % server_hist
+        print 'server probabilities in system (sorted) = %s' % [count / float(sum(server_hist)) for count in server_hist]
+
+        def all_states():
+            global MAX_Q
+            for n in range(max_customers + 1):
+                for s in range(1, max_servers + 1):
+                    if MAX_Q is None:
+                        MAX_Q = max_servers
+                    for q in range(MAX_Q):
+                        yield State(n, s, q)
+
+        transitions = {}
+
+        for row_state in all_states():
+            transitions[row_state] = {}
+            for col_state in all_states():
+                transitions[row_state][col_state] = 0
+
+        sequential_states = [State(n=o[1].n, s=o[1].s, q=o[1].q) for o in self.mSystemState[2:]]
+        for prev, next in pairs(sequential_states):
+            transitions[prev][next] += 1
+
+        for prev_key in transitions.keys():
+            sum_outbound_departures = float(sum(transitions[prev_key].values()))
+            if sum_outbound_departures == 0.0:
+                print 'No outbound transitions from state %s' % str(prev_key)
+                continue
+            for next_key in transitions[prev_key].keys():
+                transitions[prev_key][next_key] /= sum_outbound_departures
+
+        with open(BASE_PATH + 'sim_transition_sparse.dat', 'w') as f_sparse_dat:
+            for row, prev_state in enumerate(all_states()):
+                for col, next_state in enumerate(all_states()):
+                    value = transitions[prev_state][next_state]
+                    if value == 0:
+                        continue
+                    f_sparse_dat.write('%s    %s    %s\n' % (row+1, col+1, value))
+
+            # matlab recommends to force the largest row, largest column to define the correct matrix size
+            if transitions[prev_state][next_state] == 0:
+                f_sparse_dat.write('%s    %s    %s\n' % (row+1, col+1, 0))
+
+        sys.exit()
+
     def run(self):
         """Runs an MMCmodel simulation"""
         self.activate(self.scaler, self.scaler.execute())
         self.activate(self.user_generator, self.user_generator.execute())
         self.simulate(until=SECONDS_IN_A_YEAR)
         self.finalize_simulation()
+
+        self.generate_matrix_and_exit()
+
         return_dict = {}
         # compute batch means bp and number of servers
         (bp, bp_delta) = MonitorStatistics(self.mBlocked).batchmean
@@ -280,7 +357,7 @@ class ReservePolicyFixedPoissonSim(MMCmodel):
     """
 
     def run(self, reserved, density, scale_rate, lamda, mu,
-            startup_delay_func, shutdown_delay, num_customers):
+            startup_delay_func, shutdown_delay):
         """Runs the simulation with the following arguments and returns result
 
         Parameters:
@@ -295,13 +372,11 @@ class ReservePolicyFixedPoissonSim(MMCmodel):
         startup_delay_func -- A callable that returns the time a server spends
             in the booting state
         shutdown_delay -- the time a server spends in the shutting_down state
-        num_customers -- the number of users to simulate
-
         """
         self.scaler = ReservePolicy(self, scale_rate, startup_delay_func,
                                     shutdown_delay, reserved)
         self.cluster = Cluster(self, density=density)
-        self.user_generator = PoissonGenerator(self, num_customers, lamda, mu)
+        self.user_generator = PoissonGenerator(self, lamda, mu)
         return MMCmodel.run(self)
 
 
