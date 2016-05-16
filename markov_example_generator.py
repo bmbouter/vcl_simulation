@@ -6,16 +6,14 @@ import os
 import matplotlib.pyplot as plt
 
 
-MAX_CUSTOMERS = 16
-MAX_SERVERS = 17
+MAX_CUSTOMERS = 8
+MAX_SERVERS = 9
 R = 1
 
 PERIOD_LENGTH = 300
 
-# LAMBDA = 1.0 / (8926.32 * 16)  # for system 4, 5 with R = 1
-
-LAMBDA = 1.0 / (8926.32 / 2)
-MU = 1.0 / 19861.04
+LAMBDA = 1.0 / 29849.74874
+MU = 1 / 29849.74874
 
 BASE_PATH = '/home/bmbouter/Documents/Research/matlab/'
 
@@ -134,11 +132,18 @@ class TableMaker(object):
         self.f_symbolic.write(data)
         self.f_numeric.write(data)
 
-    def write_non_zero_value(self, arrivals=0, departures=0, num_customers_in_service=0):
+    def write_non_zero_value(self, change_in_n, in_service):
+        if in_service < 0:
+            raise RuntimeError('in_service must be >= 0')
         #self.f_symbolic.write('a(%s)d(%s),' % (arrivals, departures))
-        value = Evaluator.arrivals(arrivals) * Evaluator.departures(departures, num_customers_in_service)
+        value_sum = 0
+        for depart_count in range(in_service):
+            needed_arrivals = change_in_n + depart_count
+            if needed_arrivals < 0:
+                continue
+                value_sum += Evaluator.arrivals(needed_arrivals) * Evaluator.departures(depart_count, in_service)
         #self.f_numeric.write('%s,' % value)
-        self.row_data.append(value)
+        self.row_data.append(value_sum)
 
     def write_row(self, current):
         self.row_data = []
@@ -158,15 +163,7 @@ class TableMaker(object):
                 in_service = current.s
             else:
                 in_service = current.n
-            if change_in_n > 0:
-                # more arrivals than departures
-                self.write_non_zero_value(arrivals=change_in_n, departures=0, num_customers_in_service=in_service)
-            elif change_in_n == 0:
-                # equal num of arrivals and departures
-                self.write_non_zero_value(arrivals=0, departures=0, num_customers_in_service=in_service)
-            else:
-                # more departures than arrivals
-                self.write_non_zero_value(arrivals=0, departures=abs(change_in_n), num_customers_in_service=in_service)
+            self.write_non_zero_value(change_in_n=change_in_n, in_service=in_service)
         self.write_string('\n')
         self.data.append(self.row_data)
 
@@ -251,9 +248,9 @@ if __name__ == "__main__":
         print 'Please run in the same directory as markov_example_generator.py'
         exit()
     startTime = datetime.now()
-    # TableMaker().run()
+    TableMaker().run()
     # SumOutputs.run(BASE_PATH + 'markov_sparse_125.txt')
-    SumOutputs.run(BASE_PATH + 'markov_sparse_4913.txt')
+    # SumOutputs.run(BASE_PATH + 'markov_sparse_4913.txt')
     d = datetime.now() - startTime
     time_in_seconds = d.days * 60 * 60 * 24 + d.seconds + d.microseconds / 1e6
     num_states = len([c for c in State.all()])
