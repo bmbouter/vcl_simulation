@@ -49,8 +49,6 @@ class User(Process):
         self.wait_time = self.sim.now() - self.arrival_time
         if not FeatureFlipper.loss_assumption() and FeatureFlipper.add_capacity_for_waiting_users() and \
                         self.wait_time >= 600:
-            #import pydevd
-            #pydevd.settrace('localhost', port=9854, stdoutToServer=True, stderrToServer=True)
             print RuntimeError('Wait time should never exceed 600 seconds')
         self.sim.mWaitTime.observe(self.wait_time)
         cluster_size = len(cluster.booting) + len(cluster.active) \
