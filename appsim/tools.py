@@ -10,6 +10,22 @@ SECONDS_IN_A_MONTH = 2628000  # 31536000 s/year / 12 months/year
 SECONDS_IN_A_YEAR = 31536000  # 86400 s/day * 365 s/year
 
 
+def pairs(lst):
+    """
+    An iterator which yields overlapping pairs from a list.
+
+    The first pair yielded is (lst[0], lst[1]). The last pair yielded is (lst[-2], lst[-1]).
+
+    :param lst: The list used to construct the pairs
+    :return: Iterator which yields pairs of elements
+    """
+    i = iter(lst)
+    prev = i.next()
+    for item in i:
+        yield (prev, item)
+        prev = item
+
+
 class MonitorStatistics(object):
     """Calculates statistics from a SimPy monitor"""
 
@@ -133,7 +149,7 @@ class MonitorStatistics(object):
         distance between the average and the edge of the confidence interval.
 
         """
-        size = (len(self.monitor) / 31)
+        size = len(self.monitor) / 31
         lower = 0
         estimates = []
         for batch in range(0, 31):
@@ -286,7 +302,7 @@ class WaitTimeStatistics(object):
         the average and the edge of the confidence interval.
 
         """
-        size = (len(self.monitor) / 31)
+        size = len(self.monitor) / 31
         lower = 0
         estimates = []
         for batch in range(0, 31):
