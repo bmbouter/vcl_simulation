@@ -1,3 +1,4 @@
+from collections import defaultdict
 from random import seed
 
 import numpy as np
@@ -17,8 +18,8 @@ from tools import MonitorStatistics, pairs, SECONDS_IN_A_YEAR, WaitTimeStatistic
 from user_generators import PoissonGenerator, DataFileGenerator
 
 
-MAX_Q = None  # [0, MAX_Q - 1] due to range(MAX_Q)
-SECONDS_IN_A_YEAR = SECONDS_IN_A_YEAR * 1  # a hack to get more simulation time
+MAX_Q = None  # [0, MAX_Q]
+SECONDS_IN_A_YEAR = SECONDS_IN_A_YEAR * 10  # a hack to get more simulation time
 BASE_PATH = '/home/bmbouter/Documents/Research/matlab/'
 
 
@@ -172,45 +173,56 @@ class MMCmodel(Simulation):
         print 'server count in system (sorted) = %s' % server_hist
         print 'server probabilities in system (sorted) = %s' % [count / float(sum(server_hist)) for count in server_hist]
 
+        max_q = max(self.mSystemState, key=lambda s: s[1].q)[1].q
+        print 'max q observed in system = %s' % max_q
+        q_hist = []
+        for q_count in range(max_q + 1):
+            q_per_state = len(filter(lambda s: s[1].q == q_count, self.mSystemState))
+            q_hist.append(q_per_state)
+
+        print 'q counts in system (sorted) = %s' % q_hist
+        print 'q probabilities in system (sorted) = %s' % [ count / float(sum(q_hist)) for count in q_hist ]
+
         def all_states():
             global MAX_Q
             for n in range(max_customers + 1):
                 for s in range(1, max_servers + 1):
                     if MAX_Q is None:
                         MAX_Q = max_servers
-                    for q in range(MAX_Q):
+                    for q in range(MAX_Q + 1):
                         yield State(n, s, q)
 
-        transitions = {}
-
-        for row_state in all_states():
-            transitions[row_state] = {}
-            for col_state in all_states():
-                transitions[row_state][col_state] = 0
-
-        sequential_states = [State(n=o[1].n, s=o[1].s, q=o[1].q) for o in self.mSystemState[2:]]
-        for prev, next in pairs(sequential_states):
-            transitions[prev][next] += 1
+        transitions = defaultdict(lambda : defaultdict(int))
+        for prev_monitor, next_monitor in pairs(self.mSystemState):
+            prev_state = prev_monitor[1]
+            prev_key = '%s,%s,%s' % (prev_state.n, prev_state.s, prev_state.q)
+            next_state = next_monitor[1]
+            next_key = '%s,%s,%s' % (next_state.n, next_state.s, next_state.q)
+            transitions[prev_key][next_key] += 1
 
         for prev_key in transitions.keys():
             sum_outbound_departures = float(sum(transitions[prev_key].values()))
-            if sum_outbound_departures == 0.0:
-                print 'No outbound transitions from state %s' % str(prev_key)
-                continue
             for next_key in transitions[prev_key].keys():
                 transitions[prev_key][next_key] /= sum_outbound_departures
 
         with open(BASE_PATH + 'sim_transition_sparse.dat', 'w') as f_sparse_dat:
             for row, prev_state in enumerate(all_states()):
+                prev_key = '%s,%s,%s' % (prev_state.n, prev_state.s, prev_state.q)
+                if prev_key not in transitions:
+                    continue
                 for col, next_state in enumerate(all_states()):
-                    value = transitions[prev_state][next_state]
-                    if value == 0:
+                    next_key = '%s,%s,%s' % (next_state.n, next_state.s, next_state.q)
+                    if next_key not in transitions[prev_key]:
                         continue
-                    f_sparse_dat.write('%s    %s    %s\n' % (row+1, col+1, value))
+                    value = transitions[prev_key][next_key]
+                    f_sparse_dat.write('%s    %s    %s\n' % (row + 1, col + 1, value))
 
             # matlab recommends to force the largest row, largest column to define the correct matrix size
-            if transitions[prev_state][next_state] == 0:
-                f_sparse_dat.write('%s    %s    %s\n' % (row+1, col+1, 0))
+            last_state = [ s for s in all_states() ][-1]
+            state_count = len([ s for s in all_states() ]) + 1
+            last_state_key = '%s,%s,%s' % (last_state.n, last_state.s, last_state.q)
+            if transitions[last_state_key][last_state_key] == 0:
+                f_sparse_dat.write('%s    %s    %s\n' % (state_count, state_count, 0))
 
         sys.exit()
 
@@ -225,36 +237,14 @@ class MMCmodel(Simulation):
 
         return_dict = {}
         # compute batch means bp and number of servers
-        (bp, bp_delta) = MonitorStatistics(self.mBlocked).batchmean
-        (num_servers, ns_delta) = MonitorStatistics(self.mNumServers).batchmean
+        bp, bp_delta = MonitorStatistics(self.mBlocked).batchmean
+        num_servers, ns_delta = MonitorStatistics(self.mNumServers).batchmean
         # compute bp timescales
         bp_by_hour = MonitorStatistics(self.mBlocked).bp_by_hour
         bp_by_day = MonitorStatistics(self.mBlocked).bp_by_day
         bp_by_week = MonitorStatistics(self.mBlocked).bp_by_week
         bp_by_month = MonitorStatistics(self.mBlocked).bp_by_month
         bp_by_year = MonitorStatistics(self.mBlocked).bp_by_year
-
-        # time_interval = float(300)
-        # num_buckets = int(math.ceil(SECONDS_IN_A_YEAR / time_interval))
-        # bucket_observations = [[] for i in range(num_buckets)]
-        # for observation in self.arrivalMonitor:
-        #     observation_time = observation[0]
-        #     index = int(math.floor(observation_time / time_interval))
-        #     bucket_observations[index].append(observation)
-        # arrival_counts = [len(observation) for observation in bucket_observations]
-        # counts_file = open('data/2008_five_minute_counts.csv', 'r')
-        # #counts_file = open('/tmp/observed_arrivals.csv', 'r')
-        # diffs = []
-        # o = open('/tmp/observed_arrivals.csv', 'w')
-        # for i, line in enumerate(counts_file):
-        #     o.write('%s\n' % arrival_counts[i])
-        #     count = float(line)
-        #     if count != arrival_counts[i]:
-        #         diff = arrival_counts[i] - count
-        #         print 'diff: %s at position %s' % (diff, i)
-        #         diffs.append(diff)
-        #
-        # o.close()
 
         #self.mServerProvisionLength = [[0, 15768000]] # Uncomment for fixed capacity utilization calculation
         # filter out first half of year data
@@ -282,7 +272,7 @@ class MMCmodel(Simulation):
         wait_times_by_week = wts.wait_times_by_week
         wait_times_by_month = wts.wait_times_by_month
         wait_times_by_year = wts.wait_times_by_year
-        (mean_wait_time, mean_wait_time_delta) = wts.batchmean
+        mean_wait_time, mean_wait_time_delta = wts.batchmean
         wait_times_year_99_percentile = np.percentile([c[1] for c in self.mWaitTime], 99)
 
         total_mServerProvisionLength = sum([data[1] for data in self.mServerProvisionLength])
