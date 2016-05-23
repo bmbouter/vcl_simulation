@@ -45,7 +45,7 @@ class Cluster(object):
 
     def __str__(self):
         return 'Cluster(booting=%d, active=%d, shutting_down=%d)' % \
-             (len(self.booting), len(self.active), len(self.shutting_down))
+               (len(self.booting), len(self.active), len(self.shutting_down))
 
     def __repr__(self):
         return self.__str__()
@@ -56,7 +56,7 @@ class Cluster(object):
         The Resource created will be assigned the appropriate _next_priority
 
         """
-        r = Resource(capacity=self.density, name='',sim=self.sim, qType=PriorityQ)
+        r = Resource(capacity=self.density, name='', sim=self.sim, qType=PriorityQ)
         r.rank = self._next_priority()
         #raw_input('creating VM with priority %s' % self._next_priority())
         return r
@@ -110,8 +110,7 @@ class Cluster(object):
         The use of negative priority values will have undefined results
 
         """
-        in_order = sorted(self.booting + self.active + self.shutting_down, 
-            key=lambda r: r.rank)
+        in_order = sorted(self.booting + self.active + self.shutting_down, key=lambda r: r.rank)
         for i in range(len(in_order)):
             if i != in_order[i].rank:
                 return i
