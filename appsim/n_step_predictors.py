@@ -34,19 +34,20 @@ class ExponentialMovingAverageNStepPredictor(object):
     def predict_n_steps(self, last_arrival_count, n):
         if last_arrival_count is None:
             return 0
-        if self.last_prediction is None:
+        elif self.last_prediction is None:
             self.last_prediction = last_arrival_count
             return last_arrival_count
-        data = [last_arrival_count]
-        for i in range(n):
-            predicted_value = data[-1] * self.alpha + self.last_prediction * (1 - self.alpha)
-            data.append(predicted_value)
-            self.last_prediction = predicted_value
-        assert len(data) == n + 1
-        self.last_prediction = data[1]
-        n_step_list = data[-n:]
-        total_sum = sum(n_step_list)
-        return total_sum
+        else:
+            data = [last_arrival_count]
+            for i in range(n):
+                predicted_value = data[-1] * self.alpha + self.last_prediction * (1 - self.alpha)
+                data.append(predicted_value)
+                self.last_prediction = predicted_value
+            assert len(data) == n + 1
+            self.last_prediction = data[1]
+            n_step_list = data[-n:]
+            total_sum = sum(n_step_list)
+            return total_sum
 
 
 class AutoregressiveNStepPredictor(object):
