@@ -4,6 +4,7 @@ from scaler import Scale
 
 DEPROV_CHECK_RATE = 5
 
+
 class GenericDataFileScaler(Scale):
 
     """Wake up periodically and Scale the cluster
@@ -45,17 +46,19 @@ class GenericDataFileScaler(Scale):
         return sorted(events)
 
     def scaling_complete(self, stopped_count):
-        """Records the number of stopped servers
-
-        """
+        """Records the number of stopped servers"""
         self.to_deprovision = self.servers_to_stop - stopped_count
         if self.to_deprovision > 0:
             self.prov_events.append((self.sim.now() + DEPROV_CHECK_RATE, 'C', ))
             sorted(self.prov_events)
+        super(GenericDataFileScaler, self).scaling_complete(stopped_count)
 
     def sleep(self):
         """Overrides the sleep function to follow the data files sleep length"""
-        return self.prov_events[0][0] - self.sim.now() if len(self.prov_events) > 0 else 10**10
+        if len(self.prov_events) > 0:
+            return self.prov_events[0][0] - self.sim.now()
+        else:
+            return 10**10
 
     def scaler_logic(self):
         """Implements the scaler logic specific to this scaler
@@ -71,6 +74,6 @@ class GenericDataFileScaler(Scale):
             elif event_label == 'D':
                 servers_to_stop = servers_to_stop + 1
             if self.to_deprovision > 0:
-                servers_to_stop = servers_to_stop  + self.to_deprovision
+                servers_to_stop = servers_to_stop + self.to_deprovision
         self.servers_to_stop = servers_to_stop
         return servers_to_start, servers_to_stop
