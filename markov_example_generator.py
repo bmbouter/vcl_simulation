@@ -6,13 +6,14 @@ import os
 import matplotlib.pyplot as plt
 
 
-MAX_CUSTOMERS = 8
-MAX_SERVERS = 9
+MAX_CUSTOMERS = 25
+MAX_SERVERS = 25
+MAX_Q = 5
 R = 1
 
 PERIOD_LENGTH = 300
 
-LAMBDA = 1.0 / 29849.74874
+LAMBDA = 1 / 2984.974874
 MU = 1 / 29849.74874
 
 BASE_PATH = '/home/bmbouter/Documents/Research/matlab/'
@@ -32,8 +33,8 @@ class Evaluator(object):
 
         :return: The probability of count arrivals occurring.
         """
-        # From equation 2.121 on page 60
-        return math.pow((LAMBDA * PERIOD_LENGTH), count) / math.factorial(count) * math.exp(-LAMBDA * PERIOD_LENGTH)
+        # From equation 2.131 on page 60
+        return (math.pow((LAMBDA * PERIOD_LENGTH), count) / math.factorial(count)) * math.exp(-LAMBDA * PERIOD_LENGTH)
 
     @classmethod
     def departures(cls, count, num_customers_in_service):
@@ -45,9 +46,9 @@ class Evaluator(object):
 
         :return: The probability of count departures occurring.
         """
-        # Also using equation 2.121 but with a scaled Mu for the number of in-service customers
+        # Also using equation 2.131 but with a scaled Mu for the number of in-service customers
         scaled_mu = num_customers_in_service * MU
-        return math.pow((scaled_mu * PERIOD_LENGTH), count) / math.factorial(count) * math.exp(-scaled_mu * PERIOD_LENGTH)
+        return (math.pow((scaled_mu * PERIOD_LENGTH), count) / math.factorial(count)) * math.exp(-scaled_mu * PERIOD_LENGTH)
 
 
 class State(object):
@@ -70,9 +71,12 @@ class State(object):
 
     @classmethod
     def all(cls):
+        global MAX_Q
         for n in range(MAX_CUSTOMERS + 1):
             for s in range(1, MAX_SERVERS + 1):
-                for q in range(MAX_SERVERS):
+                if MAX_Q is None:
+                    MAX_Q = MAX_SERVERS
+                for q in range(MAX_Q + 1):
                     yield State(n, s, q)
 
 
@@ -98,7 +102,10 @@ class TableMaker(object):
     def write_matlab_code(self):
         with open(BASE_PATH + 'markov_sparse_%s.dat' % len(self.data[0]), 'w') as f_sparse_dat:
             for row, row_data in enumerate(self.data):
-                scale = 1.0 / sum(row_data)
+                try:
+                    scale = 1.0 / sum(row_data)
+                except ZeroDivisionError as exc:
+                    scale = 0
                 normalized_row_data = map(lambda data: data * scale, row_data)
                 for col, value in enumerate(normalized_row_data):
                     if value == 0:
@@ -137,11 +144,11 @@ class TableMaker(object):
             raise RuntimeError('in_service must be >= 0')
         #self.f_symbolic.write('a(%s)d(%s),' % (arrivals, departures))
         value_sum = 0
-        for depart_count in range(in_service):
+        for depart_count in range(in_service + 1):
             needed_arrivals = change_in_n + depart_count
             if needed_arrivals < 0:
                 continue
-                value_sum += Evaluator.arrivals(needed_arrivals) * Evaluator.departures(depart_count, in_service)
+            value_sum += Evaluator.arrivals(needed_arrivals) * Evaluator.departures(depart_count, in_service)
         #self.f_numeric.write('%s,' % value)
         self.row_data.append(value_sum)
 
@@ -184,8 +191,46 @@ class SumOutputs(object):
                 data.append((state, ans))
         cls.sum_outputs(data)
         cls.prob_busy(data)
-        cls.waiting_time(data)
-        cls.utiliation(data)
+        cls.queue_length_distribution(data)
+        cls.waiting_time_distribution(data)
+        cls.unused_seat_distribution(data)
+        cls.utilization_distribution(data)
+
+    @classmethod
+    def utilization_distribution(cls, data):
+        utilization_distribution = defaultdict(int)
+        for state, prob in data:
+            unused_seats = max(state.s - state.n, 0)
+            state_utilization = (state.s - unused_seats) / float(state.s)
+            utilization_distribution[state_utilization] += prob
+        cls.plot_and_save(utilization_distribution, 'utilization_distribution.png')
+
+    @classmethod
+    def unused_seat_distribution(cls, data):
+        unused_seat_distribution = defaultdict(int)
+        for state, prob in data:
+            unused_seats = max(state.s - state.n, 0)
+            unused_seat_distribution[unused_seats] += prob
+        cls.plot_and_save(unused_seat_distribution, 'unused_seat_distribution.png')
+
+    @classmethod
+    def waiting_time_distribution(cls, data):
+        waiting_time_distribution = defaultdict(int)
+        expected_service_time = 1.0 / MU
+        for state, prob in data:
+            state_queue_length = max(state.n - state.s, 0)
+            expected_wait_time = state_queue_length * expected_service_time
+            expected_wait_time_including_provisioning = min(expected_wait_time, PERIOD_LENGTH)
+            waiting_time_distribution[expected_wait_time_including_provisioning] += prob
+        cls.plot_and_save(waiting_time_distribution, 'waiting_time_distribution.png')
+
+    @classmethod
+    def queue_length_distribution(cls, data):
+        queue_length_distribution = defaultdict(int)
+        for state, prob in data:
+            state_queue_length = max(state.n - state.s, 0)
+            queue_length_distribution[state_queue_length] += prob
+        cls.plot_and_save(queue_length_distribution, 'queue_length_distribution.png')
 
     @classmethod
     def prob_busy(cls, data):
@@ -193,25 +238,6 @@ class SumOutputs(object):
         for state, prob in filter(lambda s: s[0].n >= s[0].s, data):
             prob_sum += prob
         print 'P(busy) = %s\n' % prob_sum
-
-    @classmethod
-    def waiting_time(cls, data):
-        departures_needed = defaultdict(int)
-        for state, prob in filter(lambda s: s[0].n > s[0].s, data):
-            departures_needed[state.n] += prob
-        cls.plot_and_save(departures_needed, 'departures_needed.png')
-        expected_waiting_time = 0
-        mean_service_time = 1.0 / MU
-        for key, prob in departures_needed.iteritems():
-            expected_waiting_time += key * mean_service_time * prob
-        print 'Expected Waiting Time = %s\n' % expected_waiting_time
-
-    @classmethod
-    def utiliation(cls, data):
-        unused_servers = []
-        for state, prob in data:
-            unused_servers.append(max(state.s - state.n, 0) * prob)
-        print 'Average Unused Servers = %s\n' % sum(unused_servers)
 
     @classmethod
     def sum_outputs(cls, data):
@@ -225,10 +251,31 @@ class SumOutputs(object):
         cls.plot_and_save(n_sum, 'n_sum.png')
         cls.plot_and_save(s_sum, 's_sum.png')
         cls.plot_and_save(q_sum, 'q_sum.png')
-        simulation_n_marginals = [0.01158827785611152, 0.05140067515207855, 0.11425892042257983, 0.17162040113767102, 0.1896135483992488, 0.16897409266094127, 0.12613087402380632, 0.08127186429378533, 0.04581734288102304, 0.022596266629325224, 0.010361299398535122, 0.0041036902390239275, 0.0015167424815938962, 0.0005047563727632472, 0.00017770164046772443, 5.041855966161346e-05, 1.312785138358992e-05]
-        n_sum_list = [n_sum[i] for i in range(17)]
-        residuals = [numeric - sim for sim, numeric in zip(simulation_n_marginals, n_sum_list)]
-        print '\nn residuals = %s\n' % residuals
+
+        n_R_01 = [6.659049981877872e-05, 0.00035388094189408117, 0.002328764907948147, 0.008614908090840857, 0.019332173390246014, 0.03888980318702132, 0.0656582328213158, 0.09213937201353499, 0.11336461818434343, 0.12249037053807978, 0.12397153351262033, 0.11287089719282992, 0.0935720190524933, 0.07166945236924242, 0.05109203663238524, 0.03455476164881883, 0.02154107539852036, 0.012958511264734338, 0.007322101101501996, 0.0039012519965258784, 0.0020214973159272107, 0.0008409428834257197, 0.0003053650063118281, 0.00011986289967380168, 1.9025857091079633e-05, 9.512928545539816e-07]
+        simulation_n_marginals = n_R_01
+        if len(simulation_n_marginals) != len(n_sum):
+            raise RuntimeError('n_sum and simulation_n_marginals are not the same length, something is wrong...')
+        n_sum_list = [n_sum[i] for i in sorted(n_sum.keys())]
+        n_residuals = [numeric - sim for sim, numeric in zip(simulation_n_marginals, n_sum_list)]
+        print '\nn residuals = %s' % n_residuals
+        print 'n RMSE = %s\n' % cls.RMSE(n_residuals)
+
+        s_R_01 = [1.9025857091079632e-06, 6.944437838244065e-05, 0.0003862248989489165, 0.0025019002074769714, 0.009076285125299538, 0.02027014814483624, 0.040517465261163184, 0.06794038437939082, 0.09429214774339066, 0.1148847841659207, 0.12357008792799855, 0.12394014084842005, 0.11181210824571133, 0.09197004188542439, 0.06992287868828131, 0.04940634569411559, 0.033173484424006444, 0.02051177652989295, 0.01229260626654655, 0.0068350391599703575, 0.0036329874115416556, 0.0018369465021437384, 0.000769595919334171, 0.00027111846354788474, 9.988574972816807e-05, 1.4269392818309724e-05]
+        simulation_s_marginals = s_R_01
+        if len(simulation_s_marginals) != len(s_sum) + R:
+            raise RuntimeError('s_sum and simulation_s_marginals are not the same length, something is wrong...')
+        s_sum_list = [s_sum[i] for i in sorted(s_sum.keys())]
+        s_sum_list = ([0] * R) + s_sum_list
+        s_residuals = [numeric - sim for sim, numeric in zip(simulation_s_marginals, s_sum_list)]
+        print '\ns residuals = %s' % s_residuals
+        print 's RMSE = %s\n' % cls.RMSE(s_residuals)
+
+    @classmethod
+    def RMSE(cls, residual):
+        squared_residual = map(lambda x: x ** 2, residual)
+        mean_residual = sum(squared_residual) / len(squared_residual)
+        return math.sqrt(mean_residual)
 
     @classmethod
     def plot_and_save(cls, data, filename):
@@ -238,7 +285,10 @@ class SumOutputs(object):
         for k, v in data.iteritems():
             x_value.append(k)
             y_value.append(v)
-        plt.plot(x_value, y_value)
+        if filename == 'utilization_distribution.png':
+            plt.hist(x_value, bins=100, weights=y_value)
+        else:
+            plt.plot(x_value, y_value)
         plt.savefig(BASE_PATH + filename)
         plt.close()
 
@@ -248,9 +298,10 @@ if __name__ == "__main__":
         print 'Please run in the same directory as markov_example_generator.py'
         exit()
     startTime = datetime.now()
-    TableMaker().run()
-    # SumOutputs.run(BASE_PATH + 'markov_sparse_125.txt')
-    # SumOutputs.run(BASE_PATH + 'markov_sparse_4913.txt')
+
+    # TableMaker().run()
+    # SumOutputs.run(BASE_PATH + 'markov_sparse_3900.txt_10000')
+
     d = datetime.now() - startTime
     time_in_seconds = d.days * 60 * 60 * 24 + d.seconds + d.microseconds / 1e6
     num_states = len([c for c in State.all()])
