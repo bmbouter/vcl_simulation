@@ -157,7 +157,6 @@ class MMCmodel(Simulation):
         max_customers = max(self.mSystemState, key=lambda s: s[1].n)[1].n
         print 'max number of customers in system = %s' % max_customers
 
-
         hist = []
         for cust_count in range(max_customers + 1):
             cust_per_state = len(filter(lambda s: s[1].n == cust_count, self.mSystemState))
@@ -165,6 +164,7 @@ class MMCmodel(Simulation):
         print 'customer counts in system (sorted) = %s' % hist
         print 'customer probabilities in system (sorted) = %s' % [count / float(sum(hist)) for count in hist]
         print 'total customers in system = %s' % sum(hist)
+
 
         max_servers = max(self.mSystemState, key=lambda s: s[1].s)[1].s
         print 'max number of servers in system = %s' % max_servers
