@@ -113,6 +113,7 @@ class Scale(Process):
             self.sim.mClusterBooting.observe(len(self.sim.cluster.booting))  # monitor self.sim.cluster.booting
             self.sim.mClusterShuttingDown.observe(len(self.sim.cluster.shutting_down))  # monitor self.sim.cluster.shutting_down
             self.sim.mClusterOccupancy.observe(self.sim.cluster.capacity - self.sim.cluster.n)  # monitor the number of customers at this scale event
+            self.sim.mClusterQueueDepth.observe(User.waiting.qsize())  # monitor the number of customers waiting in the Queue for service
 
             # Drain the User.waiting queue into all newly available seats
             try:

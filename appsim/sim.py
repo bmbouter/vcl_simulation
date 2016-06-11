@@ -63,6 +63,7 @@ class MMCmodel(Simulation):
         self.mClusterBooting = Monitor(sim=self)  # monitor cluster.booting
         self.mClusterShuttingDown = Monitor(sim=self)  # cluster.shutting_down
         self.mClusterOccupancy = Monitor(sim=self)  # utilized seats
+        self.mClusterQueueDepth = Monitor(sim=self)  # Monitor the queue depths at scaling points
         self.mSystemState = Monitor(sim=self)  # system state records (n, s, q) at time t
         ### Wait Time Monitors
         self.mWaitTime = Monitor(sim=self) # wait time of each customer
@@ -156,6 +157,7 @@ class MMCmodel(Simulation):
         max_customers = max(self.mSystemState, key=lambda s: s[1].n)[1].n
         print 'max number of customers in system = %s' % max_customers
 
+
         hist = []
         for cust_count in range(max_customers + 1):
             cust_per_state = len(filter(lambda s: s[1].n == cust_count, self.mSystemState))
@@ -166,12 +168,14 @@ class MMCmodel(Simulation):
         max_servers = max(self.mSystemState, key=lambda s: s[1].s)[1].s
         print 'max number of servers in system = %s' % max_servers
 
+
         server_hist = []
         for server_count in range(max_servers + 1):
             servers_per_state = len(filter(lambda s: s[1].s == server_count, self.mSystemState))
             server_hist.append(servers_per_state)
         print 'server count in system (sorted) = %s' % server_hist
         print 'server probabilities in system (sorted) = %s' % [count / float(sum(server_hist)) for count in server_hist]
+
 
         max_q = max(self.mSystemState, key=lambda s: s[1].q)[1].q
         print 'max q observed in system = %s' % max_q
@@ -182,6 +186,17 @@ class MMCmodel(Simulation):
 
         print 'q counts in system (sorted) = %s' % q_hist
         print 'q probabilities in system (sorted) = %s' % [ count / float(sum(q_hist)) for count in q_hist ]
+
+
+        max_queue_depth = max(self.mClusterQueueDepth, key=lambda s: s[1])[1]
+        print 'max_queue_depth observed in system = %s' % max_queue_depth
+        queue_depth_hist = []
+        for queue_depth_count in range(max_queue_depth + 1):
+            queue_depth = len(filter(lambda s: s[1] == queue_depth_count, self.mClusterQueueDepth))
+            queue_depth_hist.append(queue_depth)
+
+        print 'queue_depth counts in system (sorted) = %s' % queue_depth_hist
+        print 'queue_depth probabilities in system (sorted) = %s' % [ count / float(sum(queue_depth_hist)) for count in queue_depth_hist ]
 
         def all_states():
             global MAX_Q
