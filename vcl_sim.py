@@ -13,7 +13,6 @@ three_hundred_second_startup_delay = fixed_startup_delay(300)
 
 def reserve_policy_sim():
     reserve = ReservePolicyFixedPoissonSim()
-    users_data_file_path = 'data/2008_year_arrivals.txt'
     results = reserve.run(R, 1, 300, LAMBDA, MU, three_hundred_second_startup_delay, 300)
     #reserve.run(reserved, density, scale_rate, lamda, mu, startup_delay_func, shutdown_delay)
     print results
