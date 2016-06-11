@@ -198,6 +198,8 @@ class MMCmodel(Simulation):
         print 'queue_depth counts in system (sorted) = %s' % queue_depth_hist
         print 'queue_depth probabilities in system (sorted) = %s' % [count / float(sum(queue_depth_hist)) for count in queue_depth_hist]
 
+        sys.exit(0)
+
         def all_states():
             global MAX_Q
             for n in range(max_customers + 1):
