@@ -248,9 +248,10 @@ class SumOutputs(object):
             n_sum[state.n] += prob
             s_sum[state.s] += prob
             q_sum[state.q] += prob
-        cls.plot_and_save(n_sum, 'n_sum.png')
-        cls.plot_and_save(s_sum, 's_sum.png')
-        cls.plot_and_save(q_sum, 'q_sum.png')
+
+        # extend lower section for R values not produced by Gauss Seidel output
+        for value in range(min(s_sum.keys())):
+            s_sum[value] = 0
 
         n_R_01 = [6.659049981877872e-05, 0.00035388094189408117, 0.002328764907948147, 0.008614908090840857, 0.019332173390246014, 0.03888980318702132, 0.0656582328213158, 0.09213937201353499, 0.11336461818434343, 0.12249037053807978, 0.12397153351262033, 0.11287089719282992, 0.0935720190524933, 0.07166945236924242, 0.05109203663238524, 0.03455476164881883, 0.02154107539852036, 0.012958511264734338, 0.007322101101501996, 0.0039012519965258784, 0.0020214973159272107, 0.0008409428834257197, 0.0003053650063118281, 0.00011986289967380168, 1.9025857091079633e-05, 9.512928545539816e-07]
         simulation_n_marginals = n_R_01
@@ -263,13 +264,16 @@ class SumOutputs(object):
 
         s_R_01 = [1.9025857091079632e-06, 6.944437838244065e-05, 0.0003862248989489165, 0.0025019002074769714, 0.009076285125299538, 0.02027014814483624, 0.040517465261163184, 0.06794038437939082, 0.09429214774339066, 0.1148847841659207, 0.12357008792799855, 0.12394014084842005, 0.11181210824571133, 0.09197004188542439, 0.06992287868828131, 0.04940634569411559, 0.033173484424006444, 0.02051177652989295, 0.01229260626654655, 0.0068350391599703575, 0.0036329874115416556, 0.0018369465021437384, 0.000769595919334171, 0.00027111846354788474, 9.988574972816807e-05, 1.4269392818309724e-05]
         simulation_s_marginals = s_R_01
-        if len(simulation_s_marginals) != len(s_sum) + R:
+        if len(simulation_s_marginals) != len(s_sum):
             raise RuntimeError('s_sum and simulation_s_marginals are not the same length, something is wrong...')
         s_sum_list = [s_sum[i] for i in sorted(s_sum.keys())]
-        s_sum_list = ([0] * R) + s_sum_list
         s_residuals = [numeric - sim for sim, numeric in zip(simulation_s_marginals, s_sum_list)]
         print '\ns residuals = %s' % s_residuals
         print 's RMSE = %s\n' % cls.RMSE(s_residuals)
+
+        cls.plot_and_save(n_sum, 'n_sum.png', simulation_n_marginals)
+        cls.plot_and_save(s_sum, 's_sum.png', simulation_s_marginals)
+        cls.plot_and_save(q_sum, 'q_sum.png')
 
     @classmethod
     def RMSE(cls, residual):
@@ -278,7 +282,7 @@ class SumOutputs(object):
         return math.sqrt(mean_residual)
 
     @classmethod
-    def plot_and_save(cls, data, filename):
+    def plot_and_save(cls, data, filename, sim_data=None):
         print '%s: %s' % (filename, data)
         x_value = []
         y_value = []
@@ -286,9 +290,14 @@ class SumOutputs(object):
             x_value.append(k)
             y_value.append(v)
         if filename == 'utilization_distribution.png':
-            plt.hist(x_value, bins=100, weights=y_value)
+            plt.hist(x_value, bins=200, weights=y_value, label='Gauss-Seidel')
+            loc = 'upper left'
         else:
-            plt.plot(x_value, y_value)
+            plt.plot(x_value, y_value, label='Gauss-Seidel')
+            loc = 'upper right'
+            if sim_data:
+                plt.plot(x_value, sim_data, label='Simulation')
+        plt.legend(loc=loc, shadow=True, fontsize='x-large')
         plt.savefig(BASE_PATH + filename)
         plt.close()
 
