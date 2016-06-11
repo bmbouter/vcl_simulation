@@ -185,7 +185,7 @@ class MMCmodel(Simulation):
             q_hist.append(q_per_state)
 
         print 'q counts in system (sorted) = %s' % q_hist
-        print 'q probabilities in system (sorted) = %s' % [ count / float(sum(q_hist)) for count in q_hist ]
+        print 'q probabilities in system (sorted) = %s' % [count / float(sum(q_hist)) for count in q_hist]
 
 
         max_queue_depth = max(self.mClusterQueueDepth, key=lambda s: s[1])[1]
@@ -196,7 +196,7 @@ class MMCmodel(Simulation):
             queue_depth_hist.append(queue_depth)
 
         print 'queue_depth counts in system (sorted) = %s' % queue_depth_hist
-        print 'queue_depth probabilities in system (sorted) = %s' % [ count / float(sum(queue_depth_hist)) for count in queue_depth_hist ]
+        print 'queue_depth probabilities in system (sorted) = %s' % [count / float(sum(queue_depth_hist)) for count in queue_depth_hist]
 
         def all_states():
             global MAX_Q
