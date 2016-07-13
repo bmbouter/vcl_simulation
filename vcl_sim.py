@@ -4,9 +4,9 @@ from appsim.sim import ReservePolicyFixedPoissonSim
 
 from common import fixed_startup_delay
 
-LAMBDA = 1 / 2984.974874
-MU = 1 / 29849.74874
-R = 1
+LAMBDA = 1 / 18.640048
+MU = 1 / 186.40048
+R = 9
 
 three_hundred_second_startup_delay = fixed_startup_delay(300)
 

@@ -19,7 +19,7 @@ from user_generators import PoissonGenerator, DataFileGenerator
 
 
 MAX_Q = None  # [0, MAX_Q]
-SECONDS_IN_A_YEAR = SECONDS_IN_A_YEAR * 10  # a hack to get more simulation time
+SECONDS_IN_A_YEAR = SECONDS_IN_A_YEAR * 2  # a hack to get more simulation time
 BASE_PATH = '/home/bmbouter/Documents/Research/matlab/'
 
 
