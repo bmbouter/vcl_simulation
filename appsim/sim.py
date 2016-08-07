@@ -151,8 +151,8 @@ class MMCmodel(Simulation):
         return used_seat_time / total_seat_time
 
     def generate_matrix_and_exit(self):
-        #percent_service_time_regen = (self.user_generator.regenerate_service_time_count / float(User.user_count)) * 100
-        #print '%0.2f percent service times were regenerated' % percent_service_time_regen
+        # percent_service_time_regen = (self.user_generator.regenerate_service_time_count / float(User.user_count)) * 100
+        # print '%0.2f percent service times were regenerated' % percent_service_time_regen
 
         max_customers = max(self.mSystemState, key=lambda s: s[1].n)[1].n
         print 'max number of customers in system = %s' % max_customers
