@@ -1,3 +1,7 @@
+class PredictorNotSetException(Exception):
+    pass
+
+
 class FeatureFlipper(object):
     """
     A simple feature flipper object with static methods returning feature
@@ -13,7 +17,7 @@ class FeatureFlipper(object):
     @classmethod
     def get_n_step_predictor(cls):
         if cls.n_step_predictor is None:
-            raise RuntimeError('Cannot do N-step prediction without a predictor being selected')
+            raise PredictorNotSetException('Cannot do N-step prediction without a predictor being selected')
         return cls.n_step_predictor
 
     @staticmethod

@@ -6,7 +6,7 @@ import math
 import numpy as np
 
 from appsim.user import User
-from appsim.feature import FeatureFlipper
+from appsim.feature import FeatureFlipper, PredictorNotSetException
 from appsim.tools import weighted_choice_sub
 from appsim.scaler.scaler import Scale
 
@@ -219,8 +219,12 @@ class DataDrivenReservePolicy(Scale):
         The scaler selects the value of R from a data file.
         """
         last_arrival_count = self.sim.user_generator.user_count_since_last_scale
-        predictor = FeatureFlipper.get_n_step_predictor()
-        R = predictor.predict_n_steps(last_arrival_count, self.n)
+        try:
+            predictor = FeatureFlipper.get_n_step_predictor()
+        except PredictorNotSetException:
+            R = float(self.capacity_file.next())
+        else:
+            R = predictor.predict_n_steps(last_arrival_count, self.n)
 
         # Subtract the number of estimated departing customers
         departure_cls = FeatureFlipper.departure_estimation_cls()

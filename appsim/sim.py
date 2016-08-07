@@ -19,7 +19,7 @@ from user_generators import PoissonGenerator, DataFileGenerator
 
 
 MAX_Q = None  # [0, MAX_Q]
-SECONDS_IN_A_YEAR = SECONDS_IN_A_YEAR * 2  # a hack to get more simulation time
+SECONDS_IN_A_YEAR = SECONDS_IN_A_YEAR * 1  # a hack to get more simulation time
 BASE_PATH = '/home/bmbouter/Documents/Research/matlab/'
 
 
@@ -250,7 +250,7 @@ class MMCmodel(Simulation):
         self.simulate(until=SECONDS_IN_A_YEAR)
         self.finalize_simulation()
 
-        self.generate_matrix_and_exit()
+        # self.generate_matrix_and_exit()
 
         return_dict = {}
         # compute batch means bp and number of servers
