@@ -218,7 +218,7 @@ class DataDrivenReservePolicy(Scale):
 
         The scaler selects the value of R from a data file.
         """
-        last_arrival_count = self.sim.user_generator.get_user_count_since_scale()
+        last_arrival_count = self.sim.user_generator.user_count_since_last_scale
         predictor = FeatureFlipper.get_n_step_predictor()
         R = predictor.predict_n_steps(last_arrival_count, self.n)
 

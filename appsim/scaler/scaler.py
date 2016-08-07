@@ -49,6 +49,7 @@ class Scale(Process):
         the logic through subclassing.
 
         """
+        self.sim.user_generator.reset_scale_counters()
         while True:
             # Put the 'ready' VMs into service
             not_to_be_shut_off_list = []

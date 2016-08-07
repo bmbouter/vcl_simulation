@@ -31,32 +31,6 @@ class GenericGenerator(Process):
         self.user_count_since_last_scale = 0
         self.last_scale_time = self.sim.now()
 
-    def get_user_count_since_scale(self):
-        """
-        Return the user count since the last time reset_scale_counters() was called. If it is still
-        uninitialized something is wrong and a RuntimeError will be raised.
-
-        :return: The integer count of users that have arrived since the last call to reset_scale_counters()
-        :raises RuntimeError: If user_count_since_last_scale is None
-        :rtype: int
-        """
-        if self.user_count_since_last_scale is None:
-            raise RuntimeError('user_count_since_last_scale should not be read until initialized')
-        return self.user_count_since_last_scale
-
-    def get_last_scale_time(self):
-        """
-        Return the last scale time in simulation time. If it is still uninitialized something is wrong and a
-        RuntimeError will be raised.
-
-        :return: The simulation time since a scale reset has occurred
-        :raises RuntimeError: If last_scale_time is None
-        :rtype: float
-        """
-        if self.last_scale_time is None:
-            raise RuntimeError('last_scale_time should not be read until initialized')
-        return self.last_scale_time
-
     def get_time_since_last_scale_event(self):
         """
         Return the simulation time since the last reset_scale_counters() call. The result is expected to be >= 0 and a
@@ -66,7 +40,7 @@ class GenericGenerator(Process):
         :raises RuntimeError: If the time since the last reset_scale_counters() is negative.
         :rtype: float
         """
-        time_since_last_scale_point = self.sim.now() - self.get_last_scale_time()
+        time_since_last_scale_point = self.sim.now() - self.last_scale_time
         if time_since_last_scale_point < 0:
             raise RuntimeError('The time since the last scale event is negative')
         return time_since_last_scale_point
