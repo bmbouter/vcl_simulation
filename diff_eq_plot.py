@@ -34,7 +34,7 @@ def main():
     initial_conditions = zeros(MAX_CUSTOMERS + 1)
     initial_conditions[0] = 1
 
-    args = (LAMBDA / steps_per_time_unit, MU / steps_per_time_unit, MAX_CUSTOMERS + 1)
+    args = (LAMBDA, MU, MAX_CUSTOMERS + 1)
     X, infodict = integrate.odeint(dP_dt, initial_conditions, t, args=args, full_output=True)
 
     for n_customers in range(len(initial_conditions)):
