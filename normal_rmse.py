@@ -9,9 +9,10 @@ DATA_DIR = '/home/bmbouter/Documents/Research/matlab/OLD_increasing_traffic_inte
 
 
 def get_result_data():
-    # pattern_match = re.compile('n_sum\.png.*({.*})') # n_sum
-    pattern_match = re.compile('s_sum\.png.*({.*})') # s_sum
-    result_data = {}
+    # gauss_match = re.compile('n_sum\.png.*({.*})') # n_sum
+    gauss_match = re.compile('s_sum\.png.*({.*})') # s_sum
+    sim_match = re.compile('server probabilities in system.*(\[.*\])')  # s_sum
+    result_data = {'gauss': {}, 'sim': {}}
     for root, sub_folders, filenames in os.walk(DATA_DIR):
         for filename in filenames:
             if filename == 'results.txt':
@@ -20,9 +21,18 @@ def get_result_data():
                 intensity = int(re.findall(r'\d+', test_name)[0])
                 with open(full_path, 'r') as file_handle:
                     full_text = file_handle.read()
-                for match in pattern_match.finditer(full_text):
+                for match in gauss_match.finditer(full_text):
                     data = eval(match.group(1))
-                    result_data[intensity] = data
+                    result_data['gauss'][intensity] = data
+            elif filename == 'sim_output.txt':
+                test_name = root.split(os.sep)[-1]
+                full_path = os.path.join(root, filename)
+                intensity = int(re.findall(r'\d+', test_name)[0])
+                with open(full_path, 'r') as file_handle:
+                    full_text = file_handle.read()
+                for match in sim_match.finditer(full_text):
+                    data = eval(match.group(1))
+                    result_data['sim'][intensity] = data
     return result_data
 
 
@@ -34,13 +44,24 @@ def RMSE(residual):
 
 def main():
     all_data = get_result_data()
-    for intensity, x_y_data in all_data.iteritems():
-        errors = []
+    for intensity, x_y_data in all_data['gauss'].iteritems():
+        errors_vs_norm = []
         for x, y in x_y_data.iteritems():
             # y_norm = norm(intensity, math.sqrt(intensity)).pdf(x) # n_sum
             y_norm = norm(intensity + 1, math.sqrt(intensity)).pdf(x)  # s_sum
-            errors.append(y_norm - y)
-        print 'intensity %s has RMSE %s' % (intensity, RMSE(errors))
+            errors_vs_norm.append(y_norm - y)
+        print 'intensity %s has RMSE vs Norm: %s' % (intensity, RMSE(errors_vs_norm))
+
+    for intensity, y_data in all_data['sim'].iteritems():
+        errors_vs_gauss = []
+        for x_value in range(len(y_data)):
+            sim_value = y_data[x_value]
+            try:
+                gauss_value = all_data['gauss'][intensity][x_value]
+            except KeyError:
+                gauss_value = 0
+            errors_vs_gauss.append(sim_value - gauss_value)
+        print 'intensity %s has RMSE vs Sim: %s' % (intensity, RMSE(errors_vs_gauss))
 
 
 if __name__ == "__main__":
