@@ -46,9 +46,19 @@ def main():
     original_data = read_data()
     modified_data = []
     for data in original_data:
-        data[1] = gammavariate(24, 5)
+        # data[1] = gammavariate(24, 5)
+        # data[1] = gammavariate(66.666666, 3)
+        # data[1] = gammavariate(166.666666, 1.2)
+        # data[1] = 120
+        # data[1] = 200
+        # data[1] = 500
         modified_data.append(data)
-    write_arrivals(modified_data, './2008_ch_5_gamma_120_year_arrivals.txt')
+    # write_arrivals(modified_data, './2008_ch_5_gamma_120_year_arrivals.txt')
+    # write_arrivals(modified_data, './2008_ch_5_gamma_200_year_arrivals.txt')
+    # write_arrivals(modified_data, './2008_ch_5_gamma_500_year_arrivals.txt')
+    # write_arrivals(modified_data, './2008_ch_5_fixed_120_year_arrivals.txt')
+    # write_arrivals(modified_data, './2008_ch_5_fixed_200_year_arrivals.txt')
+    # write_arrivals(modified_data, './2008_ch_5_fixed_500_year_arrivals.txt')
 
 
 if __name__ == "__main__":
