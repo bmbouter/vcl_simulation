@@ -233,6 +233,9 @@ def moving_average_reserve_capacity():
     # users_data_file_path = 'data/2008_ch_5_gamma_120_year_arrivals.txt'
     # users_data_file_path = 'data/2008_ch_5_gamma_200_year_arrivals.txt'
     # users_data_file_path = 'data/2008_ch_5_gamma_500_year_arrivals.txt'
+    # users_data_file_path = 'data/2008_ch_5_fixed_120_year_arrivals.txt'
+    # users_data_file_path = 'data/2008_ch_5_fixed_200_year_arrivals.txt'
+    # users_data_file_path = 'data/2008_ch_5_fixed_500_year_arrivals.txt'
     results = reserve.run(reserve_capacity_data_file, users_data_file_path, 2, 300, three_hundred_second_startup_delay, 300)
     #reserve.run(reserve_capacity_data_file, users_data_file_path, density, scale_rate, startup_delay_func, shutdown_delay)
     results['param'] = param_name
@@ -248,6 +251,9 @@ def exponential_moving_reserve_capacity():
     # users_data_file_path = 'data/2008_ch_5_gamma_120_year_arrivals.txt'
     # users_data_file_path = 'data/2008_ch_5_gamma_200_year_arrivals.txt'
     # users_data_file_path = 'data/2008_ch_5_gamma_500_year_arrivals.txt'
+    # users_data_file_path = 'data/2008_ch_5_fixed_120_year_arrivals.txt'
+    # users_data_file_path = 'data/2008_ch_5_fixed_200_year_arrivals.txt'
+    # users_data_file_path = 'data/2008_ch_5_fixed_500_year_arrivals.txt'
     results = reserve.run(reserve_capacity_data_file, users_data_file_path, 2, 300, three_hundred_second_startup_delay, 300)
     #reserve.run(reserve_capacity_data_file, users_data_file_path, density, scale_rate, startup_delay_func, shutdown_delay)
     results['param'] = param_name
@@ -262,6 +268,9 @@ def autoregressive_reserve_capacity():
     # users_data_file_path = 'data/2008_ch_5_gamma_120_year_arrivals.txt'
     # users_data_file_path = 'data/2008_ch_5_gamma_200_year_arrivals.txt'
     # users_data_file_path = 'data/2008_ch_5_gamma_500_year_arrivals.txt'
+    # users_data_file_path = 'data/2008_ch_5_fixed_120_year_arrivals.txt'
+    # users_data_file_path = 'data/2008_ch_5_fixed_200_year_arrivals.txt'
+    # users_data_file_path = 'data/2008_ch_5_fixed_500_year_arrivals.txt'
     results = reserve.run(reserve_capacity_data_file, users_data_file_path, 2, 300, three_hundred_second_startup_delay, 300)
     #reserve.run(reserve_capacity_data_file, users_data_file_path, density, scale_rate, startup_delay_func, shutdown_delay)
     results['param'] = param_name
@@ -276,6 +285,9 @@ def mixed_autoregressive_reserve_capacity():
     # users_data_file_path = 'data/2008_ch_5_gamma_120_year_arrivals.txt'
     # users_data_file_path = 'data/2008_ch_5_gamma_200_year_arrivals.txt'
     # users_data_file_path = 'data/2008_ch_5_gamma_500_year_arrivals.txt'
+    # users_data_file_path = 'data/2008_ch_5_fixed_120_year_arrivals.txt'
+    # users_data_file_path = 'data/2008_ch_5_fixed_200_year_arrivals.txt'
+    # users_data_file_path = 'data/2008_ch_5_fixed_500_year_arrivals.txt'
     results = reserve.run(reserve_capacity_data_file, users_data_file_path, 2, 300, three_hundred_second_startup_delay, 300)
     #reserve.run(reserve_capacity_data_file, users_data_file_path, density, scale_rate, startup_delay_func, shutdown_delay)
     results['param'] = param_name
@@ -289,6 +301,9 @@ def reserve_two_sim():
     # users_data_file_path = 'data/2008_ch_5_gamma_120_year_arrivals.txt'
     # users_data_file_path = 'data/2008_ch_5_gamma_200_year_arrivals.txt'
     # users_data_file_path = 'data/2008_ch_5_gamma_500_year_arrivals.txt'
+    # users_data_file_path = 'data/2008_ch_5_fixed_120_year_arrivals.txt'
+    # users_data_file_path = 'data/2008_ch_5_fixed_200_year_arrivals.txt'
+    # users_data_file_path = 'data/2008_ch_5_fixed_500_year_arrivals.txt'
     results = reserve.run(2, users_data_file_path, 2, 300, three_hundred_second_startup_delay, 300)
     #reserve.run(reserved, users_data_file_path, density, scale_rate, startup_delay_func, shutdown_delay)
     results['param'] = param_name
@@ -304,6 +319,9 @@ def reserve_ar_5_hmm_3_policy():
     # users_data_file_path = 'data/2008_ch_5_gamma_120_year_arrivals.txt'
     # users_data_file_path = 'data/2008_ch_5_gamma_200_year_arrivals.txt'
     # users_data_file_path = 'data/2008_ch_5_gamma_500_year_arrivals.txt'
+    # users_data_file_path = 'data/2008_ch_5_fixed_120_year_arrivals.txt'
+    # users_data_file_path = 'data/2008_ch_5_fixed_200_year_arrivals.txt'
+    # users_data_file_path = 'data/2008_ch_5_fixed_500_year_arrivals.txt'
     results = reserve.run(five_minute_counts_file, users_data_file_path, 2, 300, three_hundred_second_startup_delay, 300)
     #reserve.run(five_minute_counts_file, users_data_file_path, density, scale_rate, startup_delay_func, shutdown_delay)
     results['param'] = param_name
@@ -322,6 +340,9 @@ def data_driven_reserve_policy_no_delay():
     # users_data_file_path = 'data/2008_ch_5_gamma_120_year_arrivals.txt'
     # users_data_file_path = 'data/2008_ch_5_gamma_200_year_arrivals.txt'
     # users_data_file_path = 'data/2008_ch_5_gamma_500_year_arrivals.txt'
+    # users_data_file_path = 'data/2008_ch_5_fixed_120_year_arrivals.txt'
+    # users_data_file_path = 'data/2008_ch_5_fixed_200_year_arrivals.txt'
+    # users_data_file_path = 'data/2008_ch_5_fixed_500_year_arrivals.txt'
     results = reserve.run(reserve_capacity_data_file, users_data_file_path, 2, 300, zero_startup_delay, 0)
     #reserve.run(reserve_capacity_data_file, users_data_file_path, density, scale_rate, startup_delay_func, shutdown_delay)
     results['param'] = param_name
@@ -337,6 +358,9 @@ def data_driven_reserve_policy_with_delay():
     # users_data_file_path = 'data/2008_ch_5_gamma_120_year_arrivals.txt'
     # users_data_file_path = 'data/2008_ch_5_gamma_200_year_arrivals.txt'
     # users_data_file_path = 'data/2008_ch_5_gamma_500_year_arrivals.txt'
+    # users_data_file_path = 'data/2008_ch_5_fixed_120_year_arrivals.txt'
+    # users_data_file_path = 'data/2008_ch_5_fixed_200_year_arrivals.txt'
+    # users_data_file_path = 'data/2008_ch_5_fixed_500_year_arrivals.txt'
     results = reserve.run(reserve_capacity_data_file, users_data_file_path, 2, 300, three_hundred_second_startup_delay, 300)
     #reserve.run(reserve_capacity_data_file, users_data_file_path, density, scale_rate, startup_delay_func, shutdown_delay)
     results['param'] = param_name
