@@ -48,7 +48,7 @@ def main():
     for data in original_data:
         # data[1] = gammavariate(24, 5)
         # data[1] = gammavariate(66.666666, 3)
-        # data[1] = gammavariate(166.666666, 1.2)
+        # data[1] = gammavariate(416.666666, 1.2)
         # data[1] = 120
         # data[1] = 200
         # data[1] = 500

@@ -1,6 +1,3 @@
-import re
-from subprocess import check_output
-
 from appsim.user import active_users
 
 
@@ -54,7 +51,7 @@ gamma_P_slots = [0.045049231818548634, 0.05066505639066426,
                  0.00011072713175561128, 0.00010317225180814708]
 
 
-gamma_synthetic_P_slots = [0.9999999599056155, 4.544428027505281e-08,
+gamma_A_24_B_5_P_slots = [0.9999999599056155, 4.544428027505281e-08,
                            2.626778814530667e-27, 2.4104744371510626e-49,
                            1.5272980954811043e-72, 2.2230864600878693e-96,
                            1.2736883902207908e-120, 3.831447164455917e-145,
@@ -70,6 +67,38 @@ gamma_synthetic_P_slots = [0.9999999599056155, 4.544428027505281e-08,
                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                            0.0, 0.0, 0.0, 0.0]
+
+
+gamma_A_416_66_B_1_2_P_slots = [5.5770748843433095e-22, 0.9999461613333562,
+                                6.241981336267905e-05, 1.1537128144310504e-40,
+                                2.1281401711489723e-97, 9.836309398957382e-166,
+                                2.0263918702500046e-241, 3.5e-322, 0.0, 0.0,
+                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                0.0, 0.0, 0.0, 0.0, 0.0]
+
+
+gamma_A_66_66_B_3_P_slots = [0.9998441898471248, 0.00017567726476818134,
+                             2.1508855887372114e-28, 2.5672578387157544e-60,
+                             1.4419126748315479e-95, 1.1991387151251709e-132,
+                             6.914063391541016e-171, 6.309567016295397e-210,
+                             1.492542746232074e-249, 1.2584530351821085e-289,
+                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
 
 empirical_P_slots = [0.04574924074353286, 0.030564111400693563,
@@ -122,79 +151,6 @@ empirical_P_slots = [0.04574924074353286, 0.030564111400693563,
                      0.00020462231029357917, 0.00034462704891550177]
 
 
-class GammaDeparture(object):
-    """
-    A class for estimating the departure process as a Gamma process
-    """
-
-    @staticmethod
-    def estimate(sim):
-        departure_probability_accumulator = 0
-        for user_id, absolute_start_time in active_users.iteritems():
-            time_in_system = sim.now() - absolute_start_time
-            B = time_in_system + 300
-            arg_string = 'A=%f;B=%f' % (time_in_system, B)
-            raw_output = check_output(["./gamma_mathematica.sh", arg_string])
-            P_depart = float(raw_output.strip())
-            departure_probability_accumulator += P_depart
-        return departure_probability_accumulator
-
-    @staticmethod
-    def slotted_estimate(sim):
-        departure_probability_accumulator = 0
-        for user_id, absolute_start_time in active_users.iteritems():
-            time_in_system = sim.now() - absolute_start_time
-            time_in_system = int(time_in_system)
-            slot_index = time_in_system / 300
-            P_departure = gamma_P_slots[slot_index]
-            departure_probability_accumulator += P_departure
-        return departure_probability_accumulator
-
-    @staticmethod
-    def generate_table():
-        P_slots = []
-        for slot_start in range(0, 28800, 300):
-            slot_end = slot_start + 300
-            arg_string = 'A=%f;B=%f' % (slot_start, slot_end)
-            raw_output = check_output(["./gamma_mathematica.sh", arg_string])
-            P_depart = float(raw_output.strip())
-            P_slots.append(P_depart)
-        print P_slots
-
-
-class GammaAlpha24Beta5Departure(object):
-    """
-    A class for estimating the departure process as a Gamma process
-    """
-
-    @staticmethod
-    def slotted_estimate(sim):
-        departure_probability_accumulator = 0
-        for user_id, absolute_start_time in active_users.iteritems():
-            time_in_system = sim.now() - absolute_start_time
-            time_in_system = int(time_in_system)
-            slot_index = time_in_system / 300
-            P_departure = gamma_synthetic_P_slots[slot_index]
-            departure_probability_accumulator += P_departure
-        return departure_probability_accumulator
-
-    @staticmethod
-    def generate_table():
-        P_slots = []
-        for slot_start in range(0, 28800, 300):
-            slot_end = slot_start + 300
-            arg_string = 'A=%f;B=%f' % (slot_start, slot_end)
-            raw_output = check_output(["./gamma_alpha_twenty_four_beta_five_mathematica.sh", arg_string])
-            stripped_output = raw_output.strip()
-            if '`' in stripped_output:
-                stripped_output = re.sub(r"`[\d\.]+", '', stripped_output)
-            if '*^' in stripped_output:
-                stripped_output = stripped_output.replace('*^', 'e')
-            P_depart = float(stripped_output)
-            P_slots.append(P_depart)
-        print P_slots
-
-
 class EmpiricalDeparture(object):
     """
     A class for estimating the departure process empirically
@@ -225,6 +181,109 @@ class EmpiricalDeparture(object):
             time_in_system = int(time_in_system)
             slot_index = time_in_system / 300
             P_departure = empirical_P_slots[slot_index]
+            departure_probability_accumulator += P_departure
+        return departure_probability_accumulator
+
+
+class Fixed120Departure(object):
+    """
+    A class for estimating the departure process as fixed 120 second service time
+    """
+
+    @staticmethod
+    def slotted_estimate(sim):
+        return len(active_users)
+
+
+class Fixed200Departure(object):
+    """
+    A class for estimating the departure process as fixed 200 second service time
+    """
+
+    @staticmethod
+    def slotted_estimate(sim):
+        return len(active_users)
+
+
+class Fixed500Departure(object):
+    """
+    A class for estimating the departure process as fixed 500 second service time
+    """
+
+    @staticmethod
+    def slotted_estimate(sim):
+        departure_probability_accumulator = 0
+        for user_id, absolute_start_time in active_users.iteritems():
+            time_in_system = sim.now() - absolute_start_time
+            time_in_system = int(time_in_system)
+            if time_in_system > 200:
+                departure_probability_accumulator += 1.0
+        return departure_probability_accumulator
+
+
+class GammaAlpha24Beta5Departure(object):
+    """
+    A class for estimating the departure process as a Gamma(A=24, B=5)
+    """
+
+    @staticmethod
+    def slotted_estimate(sim):
+        departure_probability_accumulator = 0
+        for user_id, absolute_start_time in active_users.iteritems():
+            time_in_system = sim.now() - absolute_start_time
+            time_in_system = int(time_in_system)
+            slot_index = time_in_system / 300
+            P_departure = gamma_A_24_B_5_P_slots[slot_index]
+            departure_probability_accumulator += P_departure
+        return departure_probability_accumulator
+
+
+class GammaAlpha416_66Beta1_2Departure(object):
+    """
+    A class for estimating the departure process as a Gamma(A=416.66666, B=1.2)
+    """
+
+    @staticmethod
+    def slotted_estimate(sim):
+        departure_probability_accumulator = 0
+        for user_id, absolute_start_time in active_users.iteritems():
+            time_in_system = sim.now() - absolute_start_time
+            time_in_system = int(time_in_system)
+            slot_index = time_in_system / 300
+            P_departure = gamma_A_416_66_B_1_2_P_slots[slot_index]
+            departure_probability_accumulator += P_departure
+        return departure_probability_accumulator
+
+
+class GammaAlpha66_66Beta3Departure(object):
+    """
+    A class for estimating the departure process as a Gamma(A=66.66666, B=3)
+    """
+
+    @staticmethod
+    def slotted_estimate(sim):
+        departure_probability_accumulator = 0
+        for user_id, absolute_start_time in active_users.iteritems():
+            time_in_system = sim.now() - absolute_start_time
+            time_in_system = int(time_in_system)
+            slot_index = time_in_system / 300
+            P_departure = gamma_A_66_66_B_3_P_slots[slot_index]
+            departure_probability_accumulator += P_departure
+        return departure_probability_accumulator
+
+
+class GammaDeparture(object):
+    """
+    A class for estimating the departure process as a Gamma process
+    """
+    @staticmethod
+    def slotted_estimate(sim):
+        departure_probability_accumulator = 0
+        for user_id, absolute_start_time in active_users.iteritems():
+            time_in_system = sim.now() - absolute_start_time
+            time_in_system = int(time_in_system)
+            slot_index = time_in_system / 300
+            P_departure = gamma_P_slots[slot_index]
             departure_probability_accumulator += P_departure
         return departure_probability_accumulator
 

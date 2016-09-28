@@ -22,12 +22,22 @@ class FeatureFlipper(object):
 
     @staticmethod
     def departure_estimation_cls():
-        from appsim.scaler.departure import (EmpiricalDeparture, GammaAlpha24Beta5Departure,
-                                             GammaDeparture, NoDepartureEstimation)
+        from appsim.scaler.departure import (EmpiricalDeparture, Fixed120Departure,
+                                             Fixed200Departure, Fixed500Departure,
+                                             GammaAlpha24Beta5Departure,
+                                             GammaAlpha416_66Beta1_2Departure,
+                                             GammaAlpha66_66Beta3Departure,
+                                             GammaDeparture,
+                                             NoDepartureEstimation)
         return NoDepartureEstimation
         # return GammaDeparture
         # return GammaAlpha24Beta5Departure
         # return EmpiricalDeparture
+        # return Fixed120Departure
+        # return Fixed200Departure
+        # return Fixed500Departure
+        # return GammaAlpha66_66Beta3Departure
+        # return GammaAlpha416_66Beta1_2Departure
 
     @staticmethod
     def add_capacity_for_waiting_users():
