@@ -68,10 +68,11 @@ class MMCmodel(Simulation):
         ### Wait Time Monitors
         self.mWaitTime = Monitor(sim=self) # wait time of each customer
         ### Customer Monitors
-        self.mBlocked = Monitor(sim=self)  # ifcustomer is blocked or not
+        self.mBlocked = Monitor(sim=self)  # if customer is blocked or not
         self.mNumServers = Monitor(sim=self)  # cluster active+booting+shutting
         self.mServerProvisionLength = Monitor(sim=self)  # online time
         self.arrivalMonitor = Monitor(sim=self)  # user arrival monitor
+        self.predictionMonitor = Monitor(sim=self)  # arrival prediction monitor
 
         # service times of customers who were accepted
         self.mAcceptServiceTimes = Monitor(sim=self)
@@ -322,6 +323,15 @@ class MMCmodel(Simulation):
                             'bp_batch_mean_percent_error': bp_percent_error,
                             'mean_utilization': mean_utilization,
                             'bp_timescale_raw': bp_timescale_raw})
+        # import matplotlib.pyplot as plt
+        # print self.predictionMonitor.mean()
+        # print self.predictionMonitor.var()
+        # print self.mClusterQueueDepth.mean()
+        # print self.mClusterQueueDepth.var()
+        # plt.hist(self.predictionMonitor.yseries(), bins=100, range=(0, 15))
+        # W_t_without_zeros = filter(lambda x: x != 0, self.mClusterQueueDepth.yseries())
+        # plt.hist(W_t_without_zeros)
+        # plt.show()
         return return_dict
 
 
