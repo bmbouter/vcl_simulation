@@ -9,14 +9,14 @@ from numpy import linspace, zeros
 from scipy import integrate
 
 
-MAX_CUSTOMERS = 25
-MAX_SERVERS = 25
-MAX_Q = 5
+MAX_CUSTOMERS = 7
+MAX_SERVERS = 8
+MAX_Q = 3
 R = 1
 
 PERIOD_LENGTH = 300
 
-LAMBDA = 1 / 2984.974874
+LAMBDA = 1 / 29849.74874
 MU = 1 / 29849.74874
 
 BASE_PATH = '/home/bmbouter/Documents/Research/matlab/'
@@ -163,8 +163,7 @@ class TableMaker(object):
         t = linspace(0, PERIOD_LENGTH, PERIOD_LENGTH * steps_per_time_unit)
         initial_conditions = zeros(MAX_CUSTOMERS + 1)
         initial_conditions[in_service] = 1
-        # args = (LAMBDA, MU, current.s)
-        args = (LAMBDA / steps_per_time_unit, MU / steps_per_time_unit, current.s)
+        args = (LAMBDA, MU, current.s)
         X, infodict = integrate.odeint(dP_dt, initial_conditions, t, args=args, full_output=True)
         end_probabilities = X[-1]
         self.row_data = []
@@ -253,23 +252,20 @@ class SumOutputs(object):
         n_sum = defaultdict(float)
         s_sum = defaultdict(float)
         q_sum = defaultdict(float)
+        queue_length_sum = defaultdict(float)
         for state, prob in data:
             n_sum[state.n] += prob
             s_sum[state.s] += prob
             q_sum[state.q] += prob
+            queue_length = max(state.n - state.s, 0)
+            queue_length_sum[queue_length] += prob
 
         # extend lower section for R values not produced by Gauss Seidel output
         for value in range(min(s_sum.keys())):
             s_sum[value] = 0
 
-        # n_violation_01 = [0.36755244148545635, 0.36733497577340646, 0.18482245342038559, 0.06156543729729123, 0.01519995905632438, 0.002928652410834777, 0.0005388126828742993, 4.3188728464853794e-05, 1.4079144962110927e-05]
-        # n_violation_20 = [0.36327770866101433, 0.36201020509699294, 0.1861097438908402, 0.06597068760070632, 0.01781544562111004, 0.003947868350862186, 0.0007429602848249078, 0.00010578384593153616, 1.6362249550561348e-05, 2.2831045884504207e-06, 7.610348628168069e-07, 1.9025871570420173e-07]
-        # n_violation_40 = [0.35419970429990405, 0.35253684312464934, 0.18924615881922396, 0.07343891296824334, 0.022848930203780402, 0.006008560500654395, 0.0013759510319727869, 0.00028196341667362695, 5.346269911288069e-05, 8.561642206689078e-06, 7.610348628168069e-07, 1.9025871570420173e-07]
-        # n_violation_60 = [0.34552238479406683, 0.34269704286585945, 0.18982568686725898, 0.08021668945648983, 0.02895528368430676, 0.009214800377701603, 0.0026714226272026966, 0.0006906391380062523, 0.00015829525146589585, 3.805174314084035e-05, 7.6103486281680696e-06, 2.092845872746219e-06]
-        # n_violation_80 = [0.33717954011043755, 0.33218600985806507, 0.18738733116679393, 0.08598362138819989, 0.035733821207416055, 0.01385920588675687, 0.0050972212524312685, 0.0017576100156754156, 0.0005761033911523229, 0.00016933025697673954, 5.3272440397176484e-05, 1.198629908936471e-05, 4.185691745492438e-06, 3.8051743140840347e-07, 3.8051743140840347e-07]
-        n_violation_99 = [0.32072553203431126, 0.3166511447382565, 0.17748080528842725, 0.08876133108701381, 0.04615292413154097, 0.024362610005127468, 0.012802499236587484, 0.006650488346186885, 0.003355209898011893, 0.0015934155313779192, 0.0007372519622793357, 0.000413812391730982, 0.0001607684924196229, 8.466506405530436e-05, 3.139266420028139e-05, 1.9977149945633613e-05, 8.561635690985835e-06, 6.659049981877871e-06, 9.512928545539816e-07]
+        simulation_n_marginals = [0.37338910446241963, 0.3678668494417338, 0.1834891709577902, 0.05826383346286771, 0.013573997741630763, 0.0028053626280796916, 0.0006002657912235624, 1.1415514254647778e-05]
 
-        simulation_n_marginals = n_violation_99
         if len(simulation_n_marginals) != len(n_sum):
             raise RuntimeError('n_sum and simulation_n_marginals are not the same length, something is wrong...')
         n_sum_list = [n_sum[i] for i in sorted(n_sum.keys())]
@@ -277,14 +273,8 @@ class SumOutputs(object):
         print '\nn residuals = %s' % n_residuals
         print 'n RMSE = %s\n' % cls.RMSE(n_residuals)
 
-        # s_violation_01 = [3.8051743140840347e-07, 0.3711454773315302, 0.36731043239908057, 0.18306008693681755, 0.06035786522871666, 0.014746382278085564, 0.0028156387337064815, 0.0005093225819401481, 4.109588259210757e-05, 1.3318110099294121e-05]
-        # s_violation_20 = [3.8051743140840347e-07, 0.41396757725122196, 0.3611222676708014, 0.1606930820599159, 0.04959264657674152, 0.011796230632376212, 0.002366057388497453, 0.0003987822681160068, 5.3272440397176484e-05, 7.990866059576473e-06, 1.3318110099294121e-06, 3.8051743140840347e-07]
-        # s_violation_40 = [3.8051743140840347e-07, 0.41470711287916423, 0.36303912423152124, 0.1561613097105575, 0.04929850660226282, 0.01297164897799677, 0.0030348167741977216, 0.0006434549765116103, 0.00011738962758949247, 2.3401822031616813e-05, 2.092845872746219e-06, 5.707761471126052e-07, 1.9025871570420173e-07]
-        # s_violation_60 = [3.8051743140840347e-07, 0.38713729316261547, 0.3785269447247061, 0.160769566063629, 0.05192065222209813, 0.015703764135509106, 0.004410767806170508, 0.0011670469621295734, 0.00028253419282073955, 6.107304774104876e-05, 1.5220697256336139e-05, 3.614915598379833e-06, 1.1415522942252103e-06]
-        # s_violation_80 = [3.8051743140840347e-07, 0.3404510387269713, 0.398423249919473, 0.17515978402591628, 0.056808018111107667, 0.019192918722808462, 0.006719557321240997, 0.002258751472840283, 0.0007127091490279397, 0.0001978690643323698, 5.308218168147228e-05, 1.8264836707603366e-05, 3.4246568826756313e-06, 7.610348628168069e-07, 1.9025871570420173e-07]
-        s_violation_99 = [1.9025857091079632e-06, 0.2513981626729807, 0.3999748858686398, 0.21812384120639156, 0.0752605828951837, 0.028755680407457754, 0.01354926412741236, 0.006934924909698526, 0.003244859926883631, 0.0016067336313416748, 0.0006830282695697588, 0.00027682622067520867, 0.0001189116068192477, 3.9954299891267226e-05, 2.1879735654741576e-05, 4.756464272769908e-06, 9.512928545539816e-07, 9.512928545539816e-07, 1.9025857091079632e-06]
+        simulation_s_marginals = [1.9025857091079632e-06, 0.3770325560953614, 0.3677669636920056, 0.18168076324128307, 0.05707186351611157, 0.01315257500706335, 0.0027111846354788477, 0.000571727005586943, 1.0464221400093798e-05]
 
-        simulation_s_marginals = s_violation_99
         if len(simulation_s_marginals) != len(s_sum):
             raise RuntimeError('s_sum and simulation_s_marginals are not the same length, something is wrong...')
         s_sum_list = [s_sum[i] for i in sorted(s_sum.keys())]
@@ -292,7 +282,15 @@ class SumOutputs(object):
         print '\ns residuals = %s' % s_residuals
         print 's RMSE = %s\n' % cls.RMSE(s_residuals)
 
-        cls.plot_and_save(n_sum, 'n_sum.png', simulation_n_marginals)
+        simulation_queue_length_marginals = [0.9998040336719619, 0.00019596632803812021]
+
+        queue_length_sum_list = [queue_length_sum[i] for i in sorted(queue_length_sum.keys())]
+        queue_length_residuals = [simulation_queue_length_marginals[i] - queue_length_sum_list[i] for i in range(len(simulation_queue_length_marginals))]
+        print '\nqueue length residuals = %s' % queue_length_residuals
+        print 'queue length RMSE = %s\n' % cls.RMSE(queue_length_residuals)
+
+        cls.plot_and_save(n_sum, 'n_sum.png', s_sum_list)
+        # cls.plot_and_save(n_sum, 'n_sum.png', simulation_n_marginals)
         cls.plot_and_save(s_sum, 's_sum.png', simulation_s_marginals)
         cls.plot_and_save(q_sum, 'q_sum.png')
 
@@ -311,16 +309,26 @@ class SumOutputs(object):
             x_value.append(k)
             y_value.append(v)
         if filename == 'utilization_distribution.png':
-            plt.hist(x_value, bins=200, weights=y_value, label='Gauss-Seidel')
+            plt.hist(x_value, bins=100, weights=y_value)
             loc = 'upper left'
         else:
-            plt.plot(x_value, y_value, label='Gauss-Seidel')
+            # plt.plot(x_value, y_value, label='Gauss-Seidel')
+            plt.plot(x_value, y_value, label='Users')
+            # plt.plot(x_value, y_value)
             # x = linspace(0, 25, 100)
             # plt.plot(x, mlab.normpdf(x, 10, math.sqrt(10)), label='Normal Distribution')
             loc = 'upper right'
+            # if sim_data:
+            #     plt.plot(x_value, sim_data, label='Simulation')
+
             if sim_data:
-                plt.plot(x_value, sim_data, label='Simulation')
-        plt.legend(loc=loc, shadow=True, fontsize='x-large')
+                plt.plot(range(len(sim_data)), sim_data, label='Virtual Machines')
+        plt.xlabel('Number in the System')
+        # plt.xlabel('Number of Customers in the System')
+        plt.ylabel('Probability Density')
+
+        plt.legend(loc=loc, shadow=True, fontsize='large')
+        # plt.legend(loc=loc, shadow=True, fontsize='x-large')
         plt.savefig(BASE_PATH + filename)
         plt.close()
 
@@ -332,7 +340,7 @@ if __name__ == "__main__":
     startTime = datetime.now()
 
     # TableMaker().run()
-    SumOutputs.run(BASE_PATH + 'markov_sparse_5130.txt_2000')
+    SumOutputs.run(BASE_PATH + 'markov_sparse_256.txt')
 
     d = datetime.now() - startTime
     time_in_seconds = d.days * 60 * 60 * 24 + d.seconds + d.microseconds / 1e6
