@@ -40,6 +40,7 @@ class ReservePolicy(Scale):
                              scale_rate=scale_rate,
                              startup_delay_func=startup_delay_func,
                              shutdown_delay=shutdown_delay)
+        # self.called_before = False
 
     def scaler_logic(self):
         """
@@ -54,8 +55,17 @@ class ReservePolicy(Scale):
         users as before will have R additional, unused application
         seats.
         """
+
+        # Used to fix the number of VMs to a specific level
+        # if not self.called_before:
+        #     self.called_before = True
+        #     return 20, 0
+        # else:
+        #     return 0, 0
+
         # Subtract the number of estimated departing customers
         departure_cls = FeatureFlipper.departure_estimation_cls()
+
         reserved = self.reserved - departure_cls.slotted_estimate(self.sim)
 
         if FeatureFlipper.add_capacity_for_waiting_users():
@@ -161,6 +171,7 @@ class ARHMMReservePolicy(Scale):
         handles R. See ReservePolicy for more details.
         """
         reserved = self.get_arhmm_prediction()
+        self.sim.predictionMonitor.observe(reserved)
 
         # Subtract the number of estimated departing customers
         departure_cls = FeatureFlipper.departure_estimation_cls()
@@ -225,6 +236,7 @@ class DataDrivenReservePolicy(Scale):
             R = float(self.capacity_file.next())
         else:
             R = predictor.predict_n_steps(last_arrival_count, self.n)
+        self.sim.predictionMonitor.observe(R)
 
         # Subtract the number of estimated departing customers
         departure_cls = FeatureFlipper.departure_estimation_cls()
